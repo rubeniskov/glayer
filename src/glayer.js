@@ -1,11 +1,12 @@
 import glsl from "glslify";
+import glContext from "gl";
 import glShader from "gl-shader";
-import glTexture from "gl-texture2d";
-import glContext from "webgl-context";
-import ndarray from "ndarray";
+import glBuffer from "gl-buffer";
+import glFBO from "gl-fbo";
+import glVAO from "gl-vao";
 import Channel from "./channel"
 
-export default class Canvas {
+export default class Glayer {
     get channels() {
         return this._channels;
     }
@@ -15,12 +16,11 @@ export default class Canvas {
         this.contextOptions = parOptions.contextOptions;
         this.width = parOptions.width || this.canvasElement.width;
         this.height = parOptions.height || this.canvasElement.height;
+
+        this._attachments = [];
+
         parOptions.canvas !== false && this.attach(parOptions.canvas || document.createElement("canvas"));
-    }
-    attach(canvas) {
-        this.canvasElement = canvas;
-        this.canvasElement.width = this.width;
-        this.canvasElement.height = this.height;
+
         this.initContextGL();
         if (this.contextGL) {
             this.initProgram();
@@ -28,55 +28,88 @@ export default class Canvas {
             this.initChannels();
         };
     }
+    attach(canvas) {
+        this._attachments.push(canvas);
+    }
+    replace(canvas) {
+        canvas.replaceChild(canvas, canvas);
+    }
     draw() {
         var gl = this.contextGL;
         if (!gl) return;
+
         gl.clearColor(0, 0, 0, 1);
         gl.clearDepth(1.0);
         gl.viewport(0, 0, this.width, this.height);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertexBuffer_);
-        this.shader.attributes.vert.pointer()
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        this.vertices.bind();
+        this.shader.attributes.aPosition.pointer();
+
+        this.vertices.draw(gl.TRIANGLE_STRIP, 4);
+
+        this._attachments.map(function(canvas) {
+            canvas.width = gl.drawingBufferWidth;
+            canvas.height = gl.drawingBufferHeight;
+
+            function method1() {
+                // When gl.canvas is defined using direct draw;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(gl.canvas, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            }
+
+            function method2() {
+                // When gl.readPixels is defined using clone pixels but need flip YX;
+                var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
+                gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+                var ctx = canvas.getContext('2d');
+                var imageData = ctx.getImageData(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+                imageData.data.set(pixels);
+                ctx.putImageData(imageData, 0, 0, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            }
+
+            function method3() {
+                // glContext remove canvas;
+                var ctx = canvas.getContext('webgl');
+                var fbo = glFBO(ctx, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
+
+
+                ctx.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
+                    // all black
+                ctx.clearColor(0, 0, 0, 1);
+                ctx.clear(ctx.COLOR_BUFFER_BIT);
+
+                // MUST BE BEFORE drawArrays fbo.bind();
+
+                gl.bindFramebuffer(gl.FRAMEBUFFER, fbo.handle);
+                gl.readPixels(0, yOffset, width, chunkSize, format, gl.UNSIGNED_BYTE, chunkData)
+                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+                // ctx.drawImage(gl.canvas, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            }
+
+            method1();
+        });
+
+        this.vertices.unbind();
     }
     initContextGL() {
-        var canvas = this.canvasElement;
-        var gl = null;
+        var gl = glContext(this.width, this.height);
+        var ext = gl.getExtension("WEBGL_draw_buffers");
+        if (!ext) {
+            console.log("No WEBGL_draw_buffers support -- this is legal");
+            $(".tip p.extension").hide();
+        } else {
+            console.log("Successfully enabled WEBGL_draw_buffers extension");
+            $(".tip p.noextension").hide();
+        }
 
-        var validContextNames = ["webgl", "experimental-webgl", "moz-webgl", "webkit-3d"];
-        var nameIndex = 0;
-
-        while (!gl && nameIndex < validContextNames.length) {
-            var contextName = validContextNames[nameIndex];
-
-            try {
-                if (this.contextOptions) {
-                    gl = canvas.getContext(contextName, this.contextOptions);
-                } else {
-                    gl = canvas.getContext(contextName);
-                };
-            } catch (e) {
-                gl = null;
-            }
-
-            if (!gl || typeof gl.getParameter !== "function") {
-                gl = null;
-            }
-
-            ++nameIndex;
-        };
-
-        this.quadVertexBuffer_ = gl.createBuffer();
-
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, false);
-
-
+        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
         this.compress = (
             gl.getExtension("WEBGL_compressed_texture_s3tc") ||
             gl.getExtension("MOZ_WEBGL_compressed_texture_s3tc") ||
             gl.getExtension("WEBKIT_WEBGL_compressed_texture_s3tc")
         )
-
         this.contextGL = gl;
     }
     initProgram() {
@@ -87,69 +120,71 @@ export default class Canvas {
 
         this.shader = glShader(gl, glsl('./shaders/vertex.glsl'), glsl('./shaders/fragment.glsl'));
         this.shader.bind();
-        this.shaderProgram = this.shader.program;
+        this.shader.uniforms.uSamplers = [];
+        this.shader.uniforms.uChannels = [];
+        this.shader.uniforms.uChannel = -1;
+        this.shader.attributes.aPosition.location = 0;
+        this.shader.attributes.aQuadPosition.location = 1;
     }
     initChannels() {
         var self = this;
-        this._channels.map(function(channel) {
-            self.bindChannel(channel);
+        this._channels.map(function(channel, index) {
+            self.bindChannel(channel, index);
         });
     }
     initBuffers() {
         var gl = this.contextGL;
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.quadVertexBuffer_);
-        var vertices = new Float32Array([-1.0, -1.0, 0.0, 1.0, +1.0, -1.0, 1.0, 1.0, -1.0, +1.0, 0.0, 0.0,
-            1.0, +1.0, 1.0, 0.0
-        ]);
-        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
+        this.vertices = glVAO(gl, [{
+            "buffer": glBuffer(gl, [.5, -1.0, 0.0, 1.0, +1.0, -1.0, 1.0, 1.0, -1.0, +1.0, 0.0, 0.0,
+                1.0, +1.0, 1.0, 0.0
+            ]),
+            "type": gl.FLOAT,
+            "size": 4
+        }]);
+        this.vertices.bind();
+        this.shader.attributes.aPosition.pointer();
 
-        gl.enableVertexAttribArray(0);
+        // this.quadVertices.bind();
+        // this.shader.attributes.aQuadPosition.pointer();
+        // 2, gl.FLOAT, false, 0, 0
+        // type, normalized, stride, offset
 
-        // gl.glEnable(GL_BLEND);
+          // GLuint index,
+          // GLint size,
+          // GLenum type,
+          // GLboolean normalized,
+          // GLsizei stride,
+          // const GLvoid * pointer);
+
+        // var tTop = 0;
+        // var tLeft = 0;
+        // var tBottom = 1.5;
+        // var tRight = 1.5;
+
+        this.quadVertices = glVAO(gl, [{
+            "buffer": glBuffer(gl, [-1.0, -1.0, 0.0, 1.0, +1.0, -1.0, 1.0, 1.0, -1.0, +1.0, 0.0, 0.0,
+                1.0, +1.0, 1.0, 0.0
+            ]),
+            "type": gl.FLOAT,
+            "size": 4
+        }]);
+
+        this.quadVertices.bind();
+        this.shader.attributes.aQuadPosition.pointer();
+
         gl.enable(gl.DEPTH_TEST);
         gl.disable(gl.CULL_FACE);
     }
     addChannel(options) {
         var gl = this.contextGL;
-        var channel = new Channel(options);
+        var channel = new Channel(this, options);
         this._channels.push(channel);
-        gl && this.bindChannel(channel);
-        return this;
+        gl && this.bindChannel(channel, this._channels.length - 1);
+        return channel;
     }
-    bindChannel(channel) {
-        var self = this,
-            gl = this.contextGL;
-
-        switch (channel.format) {
-            case 'rgb':
-            case 'rgba':
-                var index = this._channels.length - 1;
-                channel.index = index;
-                channel.sampler = 'sampler' + index;
-                channel.data = function(data) {
-                    channel._data = ndarray(new Uint8Array(data), [this.resolution[0], this.resolution[1], this.components], [this.components, this.components * this.resolution[0], 1], 0);
-                    return channel._data;
-                }
-                channel.set = function(data) {
-                    if (data && data.length === this.size) {
-                        self.shader.bind();
-                        self.shader.uniforms[this.sampler] = this._textures[0].bind(this.index);
-                        this._textures[0].setPixels(this.data(data));
-                    }
-                    return channel;
-                }
-                channel._textures = [new glTexture(gl, channel.resolution, gl[channel.format.toUpperCase()], gl.UNSIGNED_BYTE)];
-                self.shader.uniforms[channel.sampler] = channel._textures[0].bind(index);
-                break;
-            case 'yuv420p':
-                channel._textures = [
-                    new glTexture(gl, ndarray(new Uint8Array(channel.size), channel.resolution)),
-                    new glTexture(gl, ndarray(new Uint8Array(channel.size >>> 2), channel.resolution)),
-                    new glTexture(gl, ndarray(new Uint8Array(channel.size >>> 2), channel.resolution))
-                ];
-                break;
-        }
+    bindChannel(channel, index) {
+        channel.bind(index);
     }
 }

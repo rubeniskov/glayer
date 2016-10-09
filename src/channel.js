@@ -1,4 +1,8 @@
-import ajv from 'ajv';
+import glTexture from "gl-texture2d";
+import ndarray from "ndarray";
+
+var samplerPtr = -1;
+var channelPtr = -1;
 
 export default class Channel {
     static defaults = {
@@ -16,46 +20,99 @@ export default class Channel {
             "type": 'array'
         }
     }
-    get format(){
+    get format() {
         return this.options.format;
     }
-    get size(){
-        return this.options.resolution[0] * this.options.resolution[1] * this.options.components;
+    get size() {
+        return (this.options.resolution[0] * this.options.resolution[1] * this.options.bitdepth) >>> 3;
     }
-    get resolution(){
+    get resolution() {
         return this.options.resolution;
     }
-    get components(){
+    get components() {
         return this.options.components;
     }
-    get bitdepth(){
+    get bitdepth() {
         return this.options.bitdepth;
     }
-    constructor(options) {
-        var validate = ajv().compile(Channel.defaults),
-            valid = validate(options);
-
-        if (!valid)
-            return console.log(validate.errors);
-
-        this.options = options;
-
-        // switch (this.options.format) {
-        //     case 'rgba':
-        //           this.options.components = 4;
-        //           this.options.bitdepth = 32;
-        //         break;
-        // }
-        // {
-        //     format: 'y420p', // format
-        //     components: 3, // bits per pixel
-        //     bitdepth: 12, // bits per pixel
-        //     data: new Uint8Array(), // data
-        //     size: 0, // size in bytes
-        //     resolution: [0, 0] // image resolution width - height
-        // }
-        options
+    get samplers() {
+        return this._samplers;
     }
-    set(data){
+    constructor(context, options) {
+        this.options = options;
+        this.context = context;
+        this._samplers = [];
+    }
+    bind() {
+        var gl = this.context.contextGL;
+        switch (this.format) {
+            case 'rgb':
+            case 'rgba':
+                this.addSampler(this.resolution, gl[this.format.toUpperCase()], gl.UNSIGNED_BYTE);
+                this.type = 1
+                break;
+            case 'yuv420p':
+                var quad = [this.resolution[0] >>> 1, this.resolution[1] >>> 1];
+                this.type = 2
+                this.addSampler(this.resolution, gl.LUMINANCE, gl.UNSIGNED_BYTE);
+                this.addSampler(quad, gl.LUMINANCE, gl.UNSIGNED_BYTE);
+                this.addSampler(quad, gl.LUMINANCE, gl.UNSIGNED_BYTE);
+                break;
+        }
+
+        this.context.shader.uniforms.uChannels[(this.unit = ++channelPtr)] = this.type;
+
+        return this;
+    }
+    set(data) {
+        var self = this;
+        if (!data || data.length !== this.size)
+            return this;
+        switch (this.format) {
+            case 'rgb':
+            case 'rgba':
+                this.context.shader.bind();
+                this.samplers.map(function(sampler, index) {
+                    sampler.data(self.data(data));
+                });
+                break;
+            case 'yuv420p':
+                var quad = [this.resolution[0] >>> 2, this.resolution[1] >>> 2],
+                    ylen = this.resolution[0] * this.resolution[1],
+                    uvlen = quad[0] * quad[1],
+                    props = [
+                        [0, ylen, this.resolution],
+                        [ylen, ylen + uvlen, quad],
+                        [ylen + uvlen, ylen + uvlen << 1, quad]
+                    ];
+                this.samplers.map(function(sampler, index) {
+                    sampler.data(self.data(data.subarray(props[index][0], props[index][1]), props[index][2], 1));
+                });
+                break;
+        }
+        return this;
+    }
+    addSampler(resolution, format, type){
+        var gl = this.context.contextGL;
+        this.context.shader.bind();
+        this.context.shader.uniforms.uSamplers[++samplerPtr]= samplerPtr;
+        var pointer = samplerPtr,
+            texture = new glTexture(gl, resolution, format, type);
+        this._samplers.push({
+            pointer: pointer,
+            texture: texture,
+            bind: function(){
+                texture.bind(pointer);
+            },
+            data: function(ndata){
+                texture.bind(pointer);
+                texture.setPixels(ndata);
+            }
+        });
+    }
+    data(data, resolution, components) {
+        components = components || this.components;
+        resolution = resolution ||  this.resolution;
+        return ndarray(new Uint8Array(data), resolution.concat([components]), [components, components * resolution[0], 1], 0);
     }
 }

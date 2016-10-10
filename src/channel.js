@@ -29,6 +29,11 @@ export default class Channel {
     get resolution() {
         return this.options.resolution;
     }
+    set resolution(value) {
+        this.options.resolution = value;
+        this._samplers = [];
+        this.bind();
+    }
     get components() {
         return this.options.components;
     }
@@ -66,14 +71,13 @@ export default class Channel {
     }
     set(data) {
         var self = this;
-        if (!data || data.length !== this.size)
-            return this;
         switch (this.format) {
             case 'rgb':
             case 'rgba':
-                this.samplers.map(function(sampler, index) {
-                    sampler.data(self.data(data));
-                });
+                // this.samplers.map(function(sampler, index) {
+                //     this.samplers[0].data(self.data(data));
+                // });
+                this.samplers[0].data(self.data(data));
                 break;
             case 'yuv420p':
                 var quad = [this.resolution[0] >>> 2, this.resolution[1] >>> 2],
@@ -84,16 +88,15 @@ export default class Channel {
                         [ylen, ylen + uvlen, quad],
                         [ylen + uvlen, ylen + uvlen << 1, quad]
                     ];
-                // this.samplers.map(function(sampler, index) {
-                //     sampler.data(self.data(data.subarray(props[index][0], props[index][1]), props[index][2], 1));
-                // });
+
+                this.samplers[0].data(self.data(data.subarray(props[0][0], props[0][1]), props[0][2], 1));
                 break;
         }
         return this;
     }
     addSampler(resolution, format, type){
         var gl = this.context.contextGL,
-            self = this;;
+            self = this;
             // this.context.shader.bind();
         var pointer = 0,
             texture = new glTexture(gl, resolution, format, type),

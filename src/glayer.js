@@ -92,7 +92,7 @@ export default class Glayer {
 
             sample = this._channels[1]._samplers[0];
 
-            var d = Math.cos(time * 0.01 + - 10);
+            var d = Math.cos(time * 0.01);
             var w = d * sample.texture.shape[0];
             var h = d * sample.texture.shape[1];
 
@@ -103,24 +103,24 @@ export default class Glayer {
                   (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
                 ],
                 shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-                color: [1/Math.sin(time * 0.1), 1/Math.sin(time * 0.1), 1/Math.sin(time * 0.1), Math.sin(time * 0.01)]
+                color: [0.8, 0.0, 0.0, 0.8]
             });
 
-            sample = this._channels[2]._samplers[0];
-
-            d = Math.cos(time * 0.01);
-            w = d * sample.texture.shape[0];
-            h = d * sample.texture.shape[1];
-
-            self.batch.push({
-                texture: sample.texture,
-                position: [
-                  (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-                  (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-                ],
-                shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-                color: [1/Math.cos(time * 0.1), 0.0, 0.0, Math.sin(time * 0.01)]
-            });
+            // sample = this._channels[2]._samplers[0];
+            //
+            // d = Math.cos(time * 0.01);
+            // w = d * sample.texture.shape[0];
+            // h = d * sample.texture.shape[1];
+            //
+            // self.batch.push({
+            //     texture: sample.texture,
+            //     position: [
+            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
+            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
+            //     ],
+            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
+            //     color: [1/Math.cos(time * 0.1), 0.0, 0.0, Math.sin(time * 0.01)]
+            // });
 
             this.batch.draw();
 

@@ -1,6 +1,6 @@
 {
   "name": "glayer",
-  "version": "0.0.2-pre",
+  "version": "0.0.2",
   "description": "",
   "main": "index.js",
   "scripts": {

@@ -1,9 +1,17 @@
-attribute vec4 aPosition;
-attribute vec2 aQuadPosition;
-varying vec2 vCoord;
-varying vec2 vQuadCoord;
+attribute vec4 position;
+attribute vec4 color;
+attribute vec2 texcoord0;
+
+uniform mat4 projection;
+uniform mat4 view;
+uniform mat4 model;
+
+varying vec4 v_col;
+varying vec2 v_tex0;
+
 void main() {
-    gl_Position = vec4(aPosition.xy, 0.0, 1.0);
-    vCoord = aPosition.zw;
-    vQuadCoord = aQuadPosition.xy;
+    gl_Position = projection * view * model * position;
+    v_col = color;
+    v_tex0 = texcoord0;
+    gl_PointSize = 1.00000;
 }

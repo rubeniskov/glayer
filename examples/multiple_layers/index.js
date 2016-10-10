@@ -2,6 +2,7 @@ var Glayer = require('../..'),
     http = require('http'),
     loop = require('raf-loop'),
     Chunker = require('stream-chunker'),
+    getPixels = require('get-pixels'),
     width = 640,
     height = 360,
     glayer = new Glayer({
@@ -9,29 +10,64 @@ var Glayer = require('../..'),
         width: width,
         height: height
     }),
-    channels = [{
-        format: 'yuv420p',
-        components: 3,
-        bitdepth: 12,
-        resolution: [width, height],
-        frames: [],
-        frame: 0
-    }, {
-        format: 'rgba',
-        components: 4,
-        bitdepth: 32,
-        resolution: [width, height],
-        frames: [],
-        frame: 0
-    }].map(function(channel, idx) {
-        http.get('../assets/' + width + 'x' + height + '.' + channel.format)
+    channels = [
+        /*{
+                format: 'yuv420p',
+                components: 3,
+                bitdepth: 12,
+                resolution: [width, height],
+                frames: [],
+                frame: 0
+            }, */
+        {
+            format: 'rgba',
+            components: 4,
+            bitdepth: 32,
+            resolution: [width, height],
+            frames: [],
+            frame: 0
+        }, {
+            filename: '394x473.png',
+            format: 'rgba',
+            components: 4,
+            bitdepth: 32,
+            resolution: [640,  403],
+            frames: [],
+            frame: 0
+        }, {
+            filename: '150x44.png',
+            format: 'rgba',
+            components: 4,
+            bitdepth: 32,
+            resolution: [150,  44],
+            frames: [],
+            frame: 0
+        }
+    ].map(function(channel, idx) {
+        var url = '../assets/' + (channel.filename || (channel.resolution.join('x') + '.' + channel.format)),
+            ch = glayer.addChannel(channel),
+            finish = function() {
+                console.info('Finish download ' + url);
+            };
+
+        if (/\.png$/.test(url)) {
+            getPixels(url, function(err, pixels) {
+                if (err) {
+                    console.log("Bad image path")
+                    return
+                }
+                channel.frames.push(pixels.data);
+                finish();
+            });
+            return channel;
+        }
+        http.get(url)
             .on('response', function(res) {
-                var ch = glayer.addChannel(channel);
-                res.pipe(new Chunker(ch.size)).on('data', function(chunk) {
-                    channel.frames.push(chunk);
-                }).on('end', function() {
-                    console.info('Finish download');
-                });
+                res.pipe(new Chunker(ch.size))
+                    .on('data', function(data) {
+                        channel.frames.push(data);
+                    })
+                    .on('end', finish);
             });
         return channel;
     })

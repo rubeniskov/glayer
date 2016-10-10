@@ -60,7 +60,7 @@ export default class Channel {
                 break;
         }
 
-        this.context.shader.uniforms.uChannels[(this.unit = ++channelPtr)] = this.type;
+        // this.context.shader.uniforms.uChannels[(this.unit = ++channelPtr)] = this.type;
 
         return this;
     }
@@ -71,7 +71,6 @@ export default class Channel {
         switch (this.format) {
             case 'rgb':
             case 'rgba':
-                this.context.shader.bind();
                 this.samplers.map(function(sampler, index) {
                     sampler.data(self.data(data));
                 });
@@ -85,30 +84,29 @@ export default class Channel {
                         [ylen, ylen + uvlen, quad],
                         [ylen + uvlen, ylen + uvlen << 1, quad]
                     ];
-                this.samplers.map(function(sampler, index) {
-                    sampler.data(self.data(data.subarray(props[index][0], props[index][1]), props[index][2], 1));
-                });
+                // this.samplers.map(function(sampler, index) {
+                //     sampler.data(self.data(data.subarray(props[index][0], props[index][1]), props[index][2], 1));
+                // });
                 break;
         }
         return this;
     }
     addSampler(resolution, format, type){
-        var gl = this.context.contextGL;
-        this.context.shader.bind();
-        this.context.shader.uniforms.uSamplers[++samplerPtr]= samplerPtr;
-        var pointer = samplerPtr,
-            texture = new glTexture(gl, resolution, format, type);
-        this._samplers.push({
-            pointer: pointer,
-            texture: texture,
-            bind: function(){
-                texture.bind(pointer);
-            },
-            data: function(ndata){
-                texture.bind(pointer);
-                texture.setPixels(ndata);
-            }
-        });
+        var gl = this.context.contextGL,
+            self = this;;
+            // this.context.shader.bind();
+        var pointer = 0,
+            texture = new glTexture(gl, resolution, format, type),
+            sampler = {
+                pointer: pointer,
+                texture: texture,
+                bind: function(){
+                },
+                data: function(ndata){
+                    texture.setPixels(ndata);
+                }
+            };
+        this._samplers.push(sampler);
     }
     data(data, resolution, components) {
         components = components || this.components;

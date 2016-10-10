@@ -1,181 +1,154 @@
 import glsl from "glslify";
 import glContext from "gl";
-import glShader from "gl-shader";
+import glBatch from "gl-sprite-batch";
 import glBuffer from "gl-buffer";
 import glFBO from "gl-fbo";
 import glVAO from "gl-vao";
+import glTexture from "gl-texture2d";
+import mat4 from "gl-mat4";
 import Channel from "./channel"
+
+import glShader from "./shader";
 
 export default class Glayer {
     get channels() {
         return this._channels;
     }
-    constructor(parOptions) {
-        parOptions = parOptions || {};
-        this._channels = [];
-        this.contextOptions = parOptions.contextOptions;
-        this.width = parOptions.width || this.canvasElement.width;
-        this.height = parOptions.height || this.canvasElement.height;
+    constructor(options) {
 
+        options = options || {};
+
+        var ortho = mat4.create();
+        var self = this;
+
+        this.contextOptions = options.contextOptions;
+        this.width = options.width || this.canvasElement.width;
+        this.height = options.height || this.canvasElement.height;
+
+
+        this._channels = [];
         this._attachments = [];
 
-        parOptions.canvas !== false && this.attach(parOptions.canvas || document.createElement("canvas"));
+        var gl = this.contextGL = glContext(this.width, this.height, {
+            antialias: true
+        });
 
-        this.initContextGL();
-        if (this.contextGL) {
-            this.initProgram();
-            this.initBuffers();
-            this.initChannels();
-        };
+        options.canvas !== false && this.attach(options.canvas || document.createElement("canvas"));
+
+        this.init = function() {
+
+            console.log(gl.getExtension("EXT_texture_filter_anisotropic"), 'EXT_texture_filter_anisotropic');
+            this.batch = glBatch(gl, {
+                dynamic: true,
+                capacity: 4
+            });
+
+            this.shader = glShader(gl, {
+                texcoord: true,
+                color: true,
+                normal: false
+            });
+
+        }
+
+        var time = 0;
+        this.render = function() {
+            time += 0.1;
+
+            gl.enable(gl.BLEND)
+            gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+            this.batch.premultiplied = true
+
+            this.shader.bind();
+            this.shader.uniforms.texture0 = 0;
+
+            mat4.ortho(ortho, 0, this.width, this.height, 0, 0, 1);
+            this.shader.uniforms.projection = ortho;
+
+            this.batch.bind(this.shader);
+            this.batch.clear();
+
+            // this._channels.map(function(channel) {
+            //     channel._samplers.map(function(sample) {
+            //         console.log(sample);
+            //         self.batch.push({
+            //             texture: sample.texture,
+            //             position: [0, 0],
+            //             shape: sample.texture.shape
+            //             // color:  [1.0, 0.0, 0.2, 0.2]
+            //         });
+            //     });
+            // });
+
+            var sample;
+
+            sample = this._channels[0]._samplers[0];
+
+            self.batch.push({
+                texture: sample.texture,
+                position: [0, 0],
+                shape: sample.texture.shape
+            });
+
+            sample = this._channels[1]._samplers[0];
+
+            var d = Math.cos(time * 0.01 + - 10);
+            var w = d * sample.texture.shape[0];
+            var h = d * sample.texture.shape[1];
+
+            self.batch.push({
+                texture: sample.texture,
+                position: [
+                  (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
+                  (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
+                ],
+                shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
+                color: [1/Math.sin(time * 0.1), 1/Math.sin(time * 0.1), 1/Math.sin(time * 0.1), Math.sin(time * 0.01)]
+            });
+
+            sample = this._channels[2]._samplers[0];
+
+            d = Math.cos(time * 0.01);
+            w = d * sample.texture.shape[0];
+            h = d * sample.texture.shape[1];
+
+            self.batch.push({
+                texture: sample.texture,
+                position: [
+                  (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
+                  (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
+                ],
+                shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
+                color: [1/Math.cos(time * 0.1), 0.0, 0.0, Math.sin(time * 0.01)]
+            });
+
+            this.batch.draw();
+
+            this._attachments.map(function(canvas) {
+                canvas.width = gl.drawingBufferWidth;
+                canvas.height = gl.drawingBufferHeight;
+                var ctx = canvas.getContext('2d');
+                ctx.drawImage(gl.canvas, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+            });
+
+            this.batch.unbind();
+        }
+
+        this.draw = this.render;
+
+        this.init();
     }
     attach(canvas) {
         this._attachments.push(canvas);
     }
     replace(canvas) {
-        canvas.replaceChild(canvas, canvas);
-    }
-    draw() {
-        var gl = this.contextGL;
-        if (!gl) return;
-
-        gl.clearColor(0, 0, 0, 1);
-        gl.clearDepth(1.0);
-        gl.viewport(0, 0, this.width, this.height);
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT | gl.STENCIL_BUFFER_BIT);
-
-        this.vertices.bind();
-        this.shader.attributes.aPosition.pointer();
-
-        this.vertices.draw(gl.TRIANGLE_STRIP, 4);
-
-        this._attachments.map(function(canvas) {
-            canvas.width = gl.drawingBufferWidth;
-            canvas.height = gl.drawingBufferHeight;
-
-            function method1() {
-                // When gl.canvas is defined using direct draw;
-                var ctx = canvas.getContext('2d');
-                ctx.drawImage(gl.canvas, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-            }
-
-            function method2() {
-                // When gl.readPixels is defined using clone pixels but need flip YX;
-                var pixels = new Uint8Array(gl.drawingBufferWidth * gl.drawingBufferHeight * 4);
-                gl.readPixels(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight, gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-                var ctx = canvas.getContext('2d');
-                var imageData = ctx.getImageData(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-                imageData.data.set(pixels);
-                ctx.putImageData(imageData, 0, 0, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-            }
-
-            function method3() {
-                // glContext remove canvas;
-                var ctx = canvas.getContext('webgl');
-                var fbo = glFBO(ctx, [gl.drawingBufferWidth, gl.drawingBufferHeight]);
-
-
-                ctx.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight)
-                    // all black
-                ctx.clearColor(0, 0, 0, 1);
-                ctx.clear(ctx.COLOR_BUFFER_BIT);
-
-                // MUST BE BEFORE drawArrays fbo.bind();
-
-                gl.bindFramebuffer(gl.FRAMEBUFFER, fbo.handle);
-                gl.readPixels(0, yOffset, width, chunkSize, format, gl.UNSIGNED_BYTE, chunkData)
-                gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-
-                // ctx.drawImage(gl.canvas, 0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
-            }
-
-            method1();
-        });
-
-        this.vertices.unbind();
-    }
-    initContextGL() {
-        var gl = glContext(this.width, this.height);
-        var ext = gl.getExtension("WEBGL_draw_buffers");
-        if (!ext) {
-            console.log("No WEBGL_draw_buffers support -- this is legal");
-            $(".tip p.extension").hide();
-        } else {
-            console.log("Successfully enabled WEBGL_draw_buffers extension");
-            $(".tip p.noextension").hide();
+            canvas.replaceChild(canvas, canvas);
         }
-
-        gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);
-        this.compress = (
-            gl.getExtension("WEBGL_compressed_texture_s3tc") ||
-            gl.getExtension("MOZ_WEBGL_compressed_texture_s3tc") ||
-            gl.getExtension("WEBKIT_WEBGL_compressed_texture_s3tc")
-        )
-        this.contextGL = gl;
-    }
-    initProgram() {
-        var gl = this.contextGL;
-
-        gl.clearColor(0, 0, 0, 0);
-        gl.clear(gl.COLOR_BUFFER_BIT);
-
-        this.shader = glShader(gl, glsl('./shaders/vertex.glsl'), glsl('./shaders/fragment.glsl'));
-        this.shader.bind();
-        this.shader.uniforms.uSamplers = [];
-        this.shader.uniforms.uChannels = [];
-        this.shader.uniforms.uChannel = -1;
-        this.shader.attributes.aPosition.location = 0;
-        this.shader.attributes.aQuadPosition.location = 1;
-    }
     initChannels() {
         var self = this;
         this._channels.map(function(channel, index) {
             self.bindChannel(channel, index);
         });
-    }
-    initBuffers() {
-        var gl = this.contextGL;
-
-
-        this.vertices = glVAO(gl, [{
-            "buffer": glBuffer(gl, [.5, -1.0, 0.0, 1.0, +1.0, -1.0, 1.0, 1.0, -1.0, +1.0, 0.0, 0.0,
-                1.0, +1.0, 1.0, 0.0
-            ]),
-            "type": gl.FLOAT,
-            "size": 4
-        }]);
-        this.vertices.bind();
-        this.shader.attributes.aPosition.pointer();
-
-        // this.quadVertices.bind();
-        // this.shader.attributes.aQuadPosition.pointer();
-        // 2, gl.FLOAT, false, 0, 0
-        // type, normalized, stride, offset
-
-          // GLuint index,
-          // GLint size,
-          // GLenum type,
-          // GLboolean normalized,
-          // GLsizei stride,
-          // const GLvoid * pointer);
-
-        // var tTop = 0;
-        // var tLeft = 0;
-        // var tBottom = 1.5;
-        // var tRight = 1.5;
-
-        this.quadVertices = glVAO(gl, [{
-            "buffer": glBuffer(gl, [-1.0, -1.0, 0.0, 1.0, +1.0, -1.0, 1.0, 1.0, -1.0, +1.0, 0.0, 0.0,
-                1.0, +1.0, 1.0, 0.0
-            ]),
-            "type": gl.FLOAT,
-            "size": 4
-        }]);
-
-        this.quadVertices.bind();
-        this.shader.attributes.aQuadPosition.pointer();
-
-        gl.enable(gl.DEPTH_TEST);
-        gl.disable(gl.CULL_FACE);
     }
     addChannel(options) {
         var gl = this.contextGL;

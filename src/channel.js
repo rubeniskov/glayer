@@ -70,6 +70,8 @@ export default class Channel {
         return this;
     }
     set(data) {
+        if(data == undefined)
+            return;
         var self = this;
         switch (this.format) {
             case 'rgb':

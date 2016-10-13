@@ -92,7 +92,8 @@ export default class Glayer {
                 type: 2,
                 texture: channel._samplers.map(function(sampler){return sampler.texture}),
                 position: channel.position || [0, 0],
-                shape: sample.texture.shape
+                shape: sample.texture.shape,
+                color: [0.8, 0.0, 0.0, 0.0]
             });
 
             channel = this._channels[0]
@@ -102,7 +103,8 @@ export default class Glayer {
                 type: 1,
                 texture: [sample.texture, sample.texture, sample.texture],
                 position: channel.position || [0, 0],
-                shape: sample.texture.shape
+                shape: sample.texture.shape,
+                color: [0.8, 0.0, 0.0, 1.0]
             });
 
             // var d = Math.cos(time * 0.01);

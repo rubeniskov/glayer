@@ -170,10 +170,10 @@ function createFragmentShader(hasColors, numTexCoords) {
         ');',
         '}',
         'void main() {',
-        'if(v_type == 2.0){',
-        'gl_FragColor = v_col *  vec4(yuv420p(texture2D(texture0,  v_tex0).r, texture2D(texture1,  v_tex0).r, texture2D(texture2,  v_tex0).r), 1.0) * tint;',
+        'if(v_col.a == 0.0){',
+        'gl_FragColor = vec4(yuv420p(texture2D(texture0,  v_tex0).r, texture2D(texture1,  v_tex0).r, texture2D(texture2,  v_tex0).r), 1.0) * tint;',
         '} else {',
-        'gl_FragColor = v_col *  texture2D(texture0,  v_tex0) * tint;',
+        'gl_FragColor = texture2D(texture0,  v_tex0) * tint;',
         '}',
         '}'
     ].join('\n');

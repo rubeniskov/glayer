@@ -31,8 +31,12 @@ export default class Channel {
     }
     set resolution(value) {
         this.options.resolution = value;
-        this._samplers = [];
-        this.bind();
+    }
+    get position() {
+        return this.options.position;
+    }
+    set position(value) {
+        this.options.position = value;
     }
     get components() {
         return this.options.components;
@@ -45,6 +49,7 @@ export default class Channel {
     }
     constructor(context, options) {
         this.options = options;
+        this.options.position = [0, 0];
         this.context = context;
         this._samplers = [];
     }
@@ -70,8 +75,10 @@ export default class Channel {
         return this;
     }
     set(data) {
-        if(data == undefined)
-            return;
+        this.disabled = data === undefined;
+        if (this.disabled)
+            return this.disabled;
+
         var self = this;
         switch (this.format) {
             case 'rgb':
@@ -79,7 +86,7 @@ export default class Channel {
                 // this.samplers.map(function(sampler, index) {
                 //     this.samplers[0].data(self.data(data));
                 // });
-                this.samplers[0].data(self.data(data));
+                this.samplers[0].data(self._data(data));
                 break;
             case 'yuv420p':
                 var quad = [this.resolution[0] >>> 2, this.resolution[1] >>> 2],
@@ -91,31 +98,30 @@ export default class Channel {
                         [ylen + uvlen, ylen + uvlen << 1, quad]
                     ];
 
-                this.samplers[0].data(self.data(data.subarray(props[0][0], props[0][1]), props[0][2], 1));
+                this.samplers[0].data(self._data(data.subarray(props[0][0], props[0][1]), props[0][2], 1));
                 break;
         }
         return this;
     }
-    addSampler(resolution, format, type){
+    addSampler(resolution, format, type) {
         var gl = this.context.contextGL,
             self = this;
-            // this.context.shader.bind();
+        // this.context.shader.bind();
         var pointer = 0,
             texture = new glTexture(gl, resolution, format, type),
             sampler = {
                 pointer: pointer,
                 texture: texture,
-                bind: function(){
-                },
-                data: function(ndata){
+                bind: function() {},
+                data: function(ndata) {
                     texture.setPixels(ndata);
                 }
             };
         this._samplers.push(sampler);
     }
-    data(data, resolution, components) {
+    _data(data, resolution, components) {
         components = components || this.components;
         resolution = resolution ||  this.resolution;
-        return ndarray(new Uint8Array(data), resolution.concat([components]), [components, components * resolution[0], 1], 0);
+        return this.data = data.shape ? data : ndarray(new Uint8Array(data), resolution.concat([components]), [components, components * resolution[0], 1], 0);
     }
 }

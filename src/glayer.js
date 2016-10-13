@@ -57,6 +57,9 @@ export default class Glayer {
 
             gl.enable(gl.BLEND)
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+            gl.clearColor(0.0, 0.0, 0.0, 1.0);
+            gl.clear(gl.COLOR_BUFFER_BIT);
+
             this.batch.premultiplied = true
 
             this.shader.bind();
@@ -80,31 +83,39 @@ export default class Glayer {
             //     });
             // });
 
-            var sample;
+            var sample, channel;
 
-            sample = this._channels[0]._samplers[0];
+            channel = this._channels[1]
+            sample = channel._samplers[0];
 
-            self.batch.push({
+            !channel.disabled && self.batch.push({
                 texture: sample.texture,
-                position: [0, 0],
+                position: channel.position || [0, 0],
                 shape: sample.texture.shape
             });
 
-            sample = this._channels[1]._samplers[0];
+            channel = this._channels[0]
+            sample = channel._samplers[0];
 
-            var d = Math.cos(time * 0.01);
-            var w = d * sample.texture.shape[0];
-            var h = d * sample.texture.shape[1];
-
-            self.batch.push({
+            !channel.disabled && self.batch.push({
                 texture: sample.texture,
-                position: [
-                  (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-                  (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-                ],
-                shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-                color: [0.8, 0.0, 0.0, 0.8]
+                position: channel.position || [0, 0],
+                shape: sample.texture.shape
             });
+
+            // var d = Math.cos(time * 0.01);
+            // var w = d * sample.texture.shape[0];
+            // var h = d * sample.texture.shape[1];
+            //
+            // self.batch.push({
+            //     texture: sample.texture,
+            //     position: [
+            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
+            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
+            //     ],
+            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
+            //     color: [0.8, 0.0, 0.0, 0.8]
+            // });
 
             // sample = this._channels[2]._samplers[0];
             //

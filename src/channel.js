@@ -89,7 +89,7 @@ export default class Channel {
                 this.samplers[0].data(self._data(data));
                 break;
             case 'yuv420p':
-                var quad = [this.resolution[0] >>> 2, this.resolution[1] >>> 2],
+                var quad = [this.resolution[0] >>> 1, this.resolution[1] >>> 1],
                     ylen = this.resolution[0] * this.resolution[1],
                     uvlen = quad[0] * quad[1],
                     props = [
@@ -98,7 +98,9 @@ export default class Channel {
                         [ylen + uvlen, ylen + uvlen << 1, quad]
                     ];
 
-                this.samplers[0].data(self._data(data.subarray(props[0][0], props[0][1]), props[0][2], 1));
+                this.samplers.map(function(samplers, idx){
+                    samplers.data(self._data(data.subarray(props[idx][0], props[idx][1]), props[idx][2], 1));
+                })
                 break;
         }
         return this;

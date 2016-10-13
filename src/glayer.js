@@ -1,6 +1,6 @@
 import glsl from "glslify";
 import glContext from "gl";
-import glBatch from "gl-sprite-batch";
+import glBatch from "./batch";
 import glBuffer from "gl-buffer";
 import glFBO from "gl-fbo";
 import glVAO from "gl-vao";
@@ -44,7 +44,7 @@ export default class Glayer {
             });
 
             this.shader = glShader(gl, {
-                texcoord: true,
+                texcoord: 3,
                 color: true,
                 normal: false
             });
@@ -89,7 +89,8 @@ export default class Glayer {
             sample = channel._samplers[0];
 
             !channel.disabled && self.batch.push({
-                texture: sample.texture,
+                type: 2,
+                texture: channel._samplers.map(function(sampler){return sampler.texture}),
                 position: channel.position || [0, 0],
                 shape: sample.texture.shape
             });
@@ -98,7 +99,8 @@ export default class Glayer {
             sample = channel._samplers[0];
 
             !channel.disabled && self.batch.push({
-                texture: sample.texture,
+                type: 1,
+                texture: [sample.texture, sample.texture, sample.texture],
                 position: channel.position || [0, 0],
                 shape: sample.texture.shape
             });

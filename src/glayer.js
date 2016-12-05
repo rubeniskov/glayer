@@ -37,7 +37,7 @@ export default class Glayer {
 
         this.init = function() {
 
-            console.log(gl.getExtension("EXT_texture_filter_anisotropic"), 'EXT_texture_filter_anisotropic');
+            // console.log(gl.getExtension("EXT_texture_filter_anisotropic"), 'EXT_texture_filter_anisotropic');
             this.batch = glBatch(gl, {
                 dynamic: true,
                 capacity: 4

@@ -140,7 +140,6 @@ function createVertexShader(hasNormals, hasColors, numTexCoords, pointSize) {
     }
     shader += "   gl_PointSize = " + pointSize + ";\n";
     shader += "}\n";
-    console.log(shader);
     return shader;
 }
 
@@ -177,7 +176,5 @@ function createFragmentShader(hasColors, numTexCoords) {
         '}',
         '}'
     ].join('\n');
-
-    console.log(shader);
     return shader;
 }

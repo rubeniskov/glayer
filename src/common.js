@@ -1,5 +1,5 @@
-var createVAO = require('gl-aliased-vao') //TODO: improve this with gl-vao
-var createBuffer = require('gl-buffer')
+var createVAO = require('gl-vao'),
+    createBuffer = require('gl-buffer')
 
 module.exports.floatsPerVertex = 5
 
@@ -47,14 +47,16 @@ module.exports.mixins = {
         this.vertexBuffer = createBuffer(gl, this.vertices, gl.ARRAY_BUFFER, usage)
         this.indexBuffer = createBuffer(gl, this.indices, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW)
 
-        var stride = 5 * 4
-        this.vao = createVAO(gl, [{ //position XY
+        var stride = module.exports.floatsPerVertex * 4;
+
+        this.vao = createVAO(gl, [{
+             //position XY
             name: 'position',
             buffer: this.vertexBuffer,
             size: 2,
             stride: stride
         }, { //texcoord UV
-            name: 'texcoord0',
+            name: 'uv',
             buffer: this.vertexBuffer,
             size: 2,
             offset: 2 * 4,

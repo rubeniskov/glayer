@@ -44,7 +44,7 @@ export default class Glayer {
             });
 
             this.shader = glShader(gl, {
-                texcoord: 3,
+                texcoord: 0,
                 color: true,
                 normal: false
             });
@@ -52,8 +52,9 @@ export default class Glayer {
         }
 
         var time = 0;
+
         this.render = function() {
-            time += 0.1;
+            time += 0.05;
 
             gl.enable(gl.BLEND)
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
@@ -63,7 +64,6 @@ export default class Glayer {
             this.batch.premultiplied = true
 
             this.shader.bind();
-            this.shader.uniforms.texture0 = 0;
 
             mat4.ortho(ortho, 0, this.width, this.height, 0, 0, 1);
             this.shader.uniforms.projection = ortho;
@@ -71,71 +71,23 @@ export default class Glayer {
             this.batch.bind(this.shader);
             this.batch.clear();
 
-            // this._channels.map(function(channel) {
-            //     channel._samplers.map(function(sample) {
-            //         console.log(sample);
-            //         self.batch.push({
-            //             texture: sample.texture,
-            //             position: [0, 0],
-            //             shape: sample.texture.shape
-            //             // color:  [1.0, 0.0, 0.2, 0.2]
-            //         });
-            //     });
-            // });
-
-            var sample, channel;
-
-            channel = this._channels[1]
-            sample = channel._samplers[0];
-
-            !channel.disabled && self.batch.push({
-                type: 2,
-                texture: channel._samplers.map(function(sampler){return sampler.texture}),
-                position: channel.position || [0, 0],
-                shape: sample.texture.shape,
-                color: [0.8, 0.0, 0.0, 0.0]
+            var sprites = this._channels
+            .filter(function(channel) {
+                return !channel.disabled;
+            })
+            .map(function(channel, index) {
+                return {
+                    format: channel.type,
+                    texture: channel._samplers.map(function(sampler) {
+                        return sampler.texture
+                    }),
+                    position: channel.position,
+                    shape: channel.shape,
+                    color: channel.color
+                }
             });
 
-            channel = this._channels[0]
-            sample = channel._samplers[0];
-
-            !channel.disabled && self.batch.push({
-                type: 1,
-                texture: [sample.texture, sample.texture, sample.texture],
-                position: channel.position || [0, 0],
-                shape: sample.texture.shape,
-                color: [0.8, 0.0, 0.0, 1.0]
-            });
-
-            // var d = Math.cos(time * 0.01);
-            // var w = d * sample.texture.shape[0];
-            // var h = d * sample.texture.shape[1];
-            //
-            // self.batch.push({
-            //     texture: sample.texture,
-            //     position: [
-            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-            //     ],
-            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-            //     color: [0.8, 0.0, 0.0, 0.8]
-            // });
-
-            // sample = this._channels[2]._samplers[0];
-            //
-            // d = Math.cos(time * 0.01);
-            // w = d * sample.texture.shape[0];
-            // h = d * sample.texture.shape[1];
-            //
-            // self.batch.push({
-            //     texture: sample.texture,
-            //     position: [
-            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-            //     ],
-            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-            //     color: [1/Math.cos(time * 0.1), 0.0, 0.0, Math.sin(time * 0.01)]
-            // });
+            self.batch.push(sprites);
 
             this.batch.draw();
 
@@ -157,8 +109,8 @@ export default class Glayer {
         this._attachments.push(canvas);
     }
     replace(canvas) {
-            canvas.replaceChild(canvas, canvas);
-        }
+        canvas.replaceChild(canvas, canvas);
+    }
     initChannels() {
         var self = this;
         this._channels.map(function(channel, index) {

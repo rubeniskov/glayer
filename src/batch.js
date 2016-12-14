@@ -8,7 +8,7 @@ var vertNumFloats = require('./common').floatsPerVertex
 //Temporary arrays to avoid GC thrashing
 var position = [0, 0],
     shape = [0, 0],
-    texcoord = [0, 0, 0, 0],
+    uv = [0, 0, 0, 0],
     color = [0, 0, 0, 0]
 
 var tmp4 = [0, 0, 0, 0],
@@ -97,23 +97,29 @@ mixes(SpriteBatch, {
 
     defaults: function() {
         this.position = copy2(position, 0, 0)
-        this.texcoord = copy4(texcoord, 0, 0, 1, 1)
+        this.uv = copy4(uv, 0, 0, 1, 1)
         this.color = copy4(color, 1, 1, 1, 1)
         this.shape = copy2(shape, 0, 0)
-        this.type = 1;
+        this.format = 1;
         return this
     },
 
     push: function(sprite) {
         var self = this;
+        if (Object.prototype.toString.call(sprite) === '[object Array]') {
+            sprite.map(function(sprite) {
+                self.push(sprite)
+            });
+            return this;
+        }
         //if we are defining attributes on the fly
         if (sprite) {
             this.texture = sprite.texture
             this.position = sprite.position || copy2(position, 0, 0)
-            this.texcoord = sprite.texcoord || copy4(texcoord, 0, 0, 1, 1)
+            this.uv = sprite.uv || copy4(uv, 0, 0, 1, 1)
             this.color = sprite.color || copy4(color, 1, 1, 1, 1)
             this.shape = sprite.shape || copy2(shape, 0, 0)
-            this.type = this._shader.attributes.type = sprite.type || 1;
+            this.format = sprite.format || 1;
         }
         // this._shader.bind();
         // this._shader.attribute.type = sprite.type;
@@ -141,12 +147,14 @@ mixes(SpriteBatch, {
 
         //get RGBA components and pack into a single float
         var colorRGBA = this.premultiplied ? premult(this.color, tmp4) : this.color
-        var c = colorToFloat(colorRGBA)
+        var c = colorToFloat(colorRGBA);
 
-        var u1 = this.texcoord[0],
-            v1 = this.texcoord[1],
-            u2 = this.texcoord[2],
-            v2 = this.texcoord[3]
+        this._shader.uniforms.format = this.format;
+
+        var u1 = this.uv[0],
+            v1 = this.uv[1],
+            u2 = this.uv[2],
+            v2 = this.uv[3]
 
         var x = this.position[0],
             y = this.position[1],
@@ -156,7 +164,7 @@ mixes(SpriteBatch, {
         this._vert(x, y, u1, v1, c)
         this._vert(x + width, y, u2, v1, c)
         this._vert(x + width, y + height, u2, v2, c)
-        this._vert(x, y + height, u1, v2, c)
+        this._vert(x, y + height, u1, v2, c);
 
         return this
     },
@@ -172,13 +180,13 @@ mixes(SpriteBatch, {
             x1 = transform[0] * x + transform[4] * y + transform[12]
             y1 = transform[1] * x + transform[5] * y + transform[13]
         }
-        //xy
+        // xy
         verts[idx++] = x1
         verts[idx++] = y1
-            //uv
+        // uv
         verts[idx++] = u1
         verts[idx++] = v1
-            //color
+        // color
         verts[idx++] = c
 
         this.idx = idx
@@ -200,7 +208,7 @@ mixes(SpriteBatch, {
 
         if (this._dirty) {
             var view = this.vertices.subarray(0, this.idx)
-            this.vertexBuffer.update(view, 0)
+            this.vertexBuffer.update(view, 0);
             this._dirty = false
         }
 

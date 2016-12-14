@@ -1,5 +1,6 @@
 import glTexture from "gl-texture2d";
 import ndarray from "ndarray";
+import Sampler from "./sampler"
 
 var samplerPtr = -1;
 var channelPtr = -1;
@@ -27,6 +28,12 @@ export default class Channel {
         return (this.options.resolution[0] * this.options.resolution[1] * this.options.bitdepth) >>> 3;
     }
     get resolution() {
+        return this.options.resolution;
+    }
+    get color() {
+        return this.options.color || [0, 0, 0, 0];
+    }
+    get shape() {
         return this.options.resolution;
     }
     set resolution(value) {
@@ -108,6 +115,7 @@ export default class Channel {
     addSampler(resolution, format, type) {
         var gl = this.context.contextGL,
             self = this;
+        // console.log(new Sampler(gl[10, 10, 4]))
         // this.context.shader.bind();
         var pointer = 0,
             texture = new glTexture(gl, resolution, format, type),

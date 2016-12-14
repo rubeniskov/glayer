@@ -68,3 +68,4 @@ node_modules
 
 lib
 /examples/assets
+/dist/bundle.js

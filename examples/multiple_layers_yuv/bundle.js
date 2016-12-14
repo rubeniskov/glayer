@@ -11,40 +11,40 @@ var Glayer = require('../..'),
         width: width,
         height: height
     }),
-    channels = [
-        /*{
-                format: 'yuv420p',
-                components: 3,
-                bitdepth: 12,
-                resolution: [width, height],
-                frames: [],
-                frame: 0
-            }, */
-        {
-            format: 'rgba',
-            components: 4,
-            bitdepth: 32,
-            resolution: [width, height],
-            frames: [],
-            frame: 0
-        }, {
-            filename: '394x473.png',
-            format: 'rgba',
-            components: 4,
-            bitdepth: 32,
-            resolution: [640,  403],
-            frames: [],
-            frame: 0
-        }, {
-            filename: '150x44.png',
-            format: 'rgba',
-            components: 4,
-            bitdepth: 32,
-            resolution: [150,  44],
-            frames: [],
-            frame: 0
-        }
-    ].map(function(channel, idx) {
+    channels = [{
+        format: 'yuv420p',
+        components: 3,
+        bitdepth: 12,
+        resolution: [width, height],
+        color: [1, 0, 0, 0.5],
+        frames: [],
+        frame: 0
+    }, {
+        format: 'rgba',
+        components: 4,
+        bitdepth: 32,
+        resolution: [width, height],
+        color: [0, 1, 0, 0.5],
+        frames: [],
+        frame: 0
+    }, {
+        filename: '394x473.png',
+        format: 'rgba',
+        components: 4,
+        bitdepth: 32,
+        color: [0, 0, 1, 0.5],
+        resolution: [640,  403],
+        frames: [],
+        frame: 0
+    }/*, {
+        filename: '150x44.png',
+        format: 'rgba',
+        components: 4,
+        bitdepth: 32,
+        resolution: [150,  44],
+        frames: [],
+        frame: 0
+    }*/].map(function(channel, idx) {
         var url = '../assets/' + (channel.filename || (channel.resolution.join('x') + '.' + channel.format)),
             ch = glayer.addChannel(channel),
             finish = function() {
@@ -60,16 +60,16 @@ var Glayer = require('../..'),
                 channel.frames.push(pixels.data);
                 finish();
             });
-            return channel;
+        } else {
+            http.get(url)
+                .on('response', function(res) {
+                    res.pipe(new Chunker(ch.size))
+                        .on('data', function(data) {
+                            channel.frames.push(data);
+                        })
+                        .on('end', finish);
+                });
         }
-        http.get(url)
-            .on('response', function(res) {
-                res.pipe(new Chunker(ch.size))
-                    .on('data', function(data) {
-                        channel.frames.push(data);
-                    })
-                    .on('end', finish);
-            });
         return channel;
     })
 
@@ -103,7 +103,7 @@ module.exports = {
     }
 }
 
-},{"../..":33,"get-pixels":7,"http":122,"raf-loop":18,"stream-chunker":26}],2:[function(require,module,exports){
+},{"../..":33,"get-pixels":7,"http":120,"raf-loop":18,"stream-chunker":26}],2:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -214,7 +214,7 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../../../node_modules/is-buffer/index.js")})
-},{"../../../../node_modules/is-buffer/index.js":96}],3:[function(require,module,exports){
+},{"../../../../node_modules/is-buffer/index.js":94}],3:[function(require,module,exports){
 "use strict"
 
 var createThunk = require("./lib/thunk.js")
@@ -827,7 +827,7 @@ function dataUriToBuffer (uri) {
 }
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":45}],7:[function(require,module,exports){
+},{"buffer":46}],7:[function(require,module,exports){
 (function (Buffer,process){
 'use strict'
 
@@ -965,7 +965,7 @@ module.exports = function getPixels(url, type, cb) {
   }
 }
 }).call(this,{"isBuffer":require("../../../node_modules/is-buffer/index.js")},require('_process'))
-},{"../../../node_modules/is-buffer/index.js":96,"_process":105,"data-uri-to-buffer":6,"ndarray":14,"ndarray-pack":12,"omggif":15,"path":102,"through":28}],8:[function(require,module,exports){
+},{"../../../node_modules/is-buffer/index.js":94,"_process":103,"data-uri-to-buffer":6,"ndarray":14,"ndarray-pack":12,"omggif":15,"path":100,"through":28}],8:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -2223,7 +2223,7 @@ try { exports.GifWriter = GifWriter; exports.GifReader = GifReader } catch(e) { 
 }).call(this);
 
 }).call(this,require('_process'))
-},{"_process":105}],17:[function(require,module,exports){
+},{"_process":103}],17:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -2270,7 +2270,7 @@ function nextTick(fn, arg1, arg2, arg3) {
 }
 
 }).call(this,require('_process'))
-},{"_process":105}],18:[function(require,module,exports){
+},{"_process":103}],18:[function(require,module,exports){
 var inherits = require('inherits')
 var EventEmitter = require('events').EventEmitter
 var now = require('right-now')
@@ -2315,7 +2315,7 @@ Engine.prototype.tick = function() {
     this.emit('tick', dt)
     this.last = time
 }
-},{"events":52,"inherits":8,"raf":19,"right-now":25}],19:[function(require,module,exports){
+},{"events":53,"inherits":8,"raf":19,"right-now":25}],19:[function(require,module,exports){
 (function (global){
 var now = require('performance-now')
   , root = typeof window === 'undefined' ? global : window
@@ -3350,7 +3350,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":20,"_process":105,"buffer":45,"core-util-is":2,"events":52,"inherits":8,"isarray":11,"process-nextick-args":17,"string_decoder/":27,"util":43}],22:[function(require,module,exports){
+},{"./_stream_duplex":20,"_process":103,"buffer":46,"core-util-is":2,"events":53,"inherits":8,"isarray":11,"process-nextick-args":17,"string_decoder/":27,"util":44}],22:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -4050,7 +4050,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":20,"_process":105,"buffer":45,"core-util-is":2,"events":52,"inherits":8,"process-nextick-args":17,"util-deprecate":31}],24:[function(require,module,exports){
+},{"./_stream_duplex":20,"_process":103,"buffer":46,"core-util-is":2,"events":53,"inherits":8,"process-nextick-args":17,"util-deprecate":31}],24:[function(require,module,exports){
 module.exports = require("./lib/_stream_transform.js")
 
 },{"./lib/_stream_transform.js":22}],25:[function(require,module,exports){
@@ -4130,7 +4130,7 @@ module.exports = function (chunkSize, opts) {
 };
 
 }).call(this,require("buffer").Buffer)
-},{"buffer":45,"through2":29}],27:[function(require,module,exports){
+},{"buffer":46,"through2":29}],27:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4353,7 +4353,7 @@ function base64DetectIncompleteChar(buffer) {
   this.charLength = this.charReceived ? 3 : 0;
 }
 
-},{"buffer":45}],28:[function(require,module,exports){
+},{"buffer":46}],28:[function(require,module,exports){
 (function (process){
 var Stream = require('stream')
 
@@ -4465,7 +4465,7 @@ function through (write, end, opts) {
 
 
 }).call(this,require('_process'))
-},{"_process":105,"stream":121}],29:[function(require,module,exports){
+},{"_process":103,"stream":119}],29:[function(require,module,exports){
 (function (process){
 var Transform = require('readable-stream/transform')
   , inherits  = require('util').inherits
@@ -4565,7 +4565,7 @@ module.exports.obj = through2(function (options, transform, flush) {
 })
 
 }).call(this,require('_process'))
-},{"_process":105,"readable-stream/transform":24,"util":135,"xtend":32}],30:[function(require,module,exports){
+},{"_process":103,"readable-stream/transform":24,"util":133,"xtend":32}],30:[function(require,module,exports){
 "use strict"
 
 function unique_pred(list, compare) {
@@ -4732,7 +4732,7 @@ var vertNumFloats = require('./common').floatsPerVertex;
 //Temporary arrays to avoid GC thrashing
 var position = [0, 0],
     shape = [0, 0],
-    texcoord = [0, 0, 0, 0],
+    uv = [0, 0, 0, 0],
     color = [0, 0, 0, 0];
 
 var tmp4 = [0, 0, 0, 0],
@@ -4815,23 +4815,29 @@ mixes(SpriteBatch, {
 
     defaults: function defaults() {
         this.position = copy2(position, 0, 0);
-        this.texcoord = copy4(texcoord, 0, 0, 1, 1);
+        this.uv = copy4(uv, 0, 0, 1, 1);
         this.color = copy4(color, 1, 1, 1, 1);
         this.shape = copy2(shape, 0, 0);
-        this.type = 1;
+        this.format = 1;
         return this;
     },
 
     push: function push(sprite) {
         var self = this;
+        if (Object.prototype.toString.call(sprite) === '[object Array]') {
+            sprite.map(function (sprite) {
+                self.push(sprite);
+            });
+            return this;
+        }
         //if we are defining attributes on the fly
         if (sprite) {
             this.texture = sprite.texture;
             this.position = sprite.position || copy2(position, 0, 0);
-            this.texcoord = sprite.texcoord || copy4(texcoord, 0, 0, 1, 1);
+            this.uv = sprite.uv || copy4(uv, 0, 0, 1, 1);
             this.color = sprite.color || copy4(color, 1, 1, 1, 1);
             this.shape = sprite.shape || copy2(shape, 0, 0);
-            this.type = this._shader.attributes.type = sprite.type || 1;
+            this.format = sprite.format || 1;
         }
         // this._shader.bind();
         // this._shader.attribute.type = sprite.type;
@@ -4858,10 +4864,12 @@ mixes(SpriteBatch, {
         var colorRGBA = this.premultiplied ? premult(this.color, tmp4) : this.color;
         var c = colorToFloat(colorRGBA);
 
-        var u1 = this.texcoord[0],
-            v1 = this.texcoord[1],
-            u2 = this.texcoord[2],
-            v2 = this.texcoord[3];
+        this._shader.uniforms.format = this.format;
+
+        var u1 = this.uv[0],
+            v1 = this.uv[1],
+            u2 = this.uv[2],
+            v2 = this.uv[3];
 
         var x = this.position[0],
             y = this.position[1],
@@ -4887,13 +4895,13 @@ mixes(SpriteBatch, {
             x1 = transform[0] * x + transform[4] * y + transform[12];
             y1 = transform[1] * x + transform[5] * y + transform[13];
         }
-        //xy
+        // xy
         verts[idx++] = x1;
         verts[idx++] = y1;
-        //uv
+        // uv
         verts[idx++] = u1;
         verts[idx++] = v1;
-        //color
+        // color
         verts[idx++] = c;
 
         this.idx = idx;
@@ -4960,7 +4968,7 @@ function transformMat4(out, a, m) {
     out[1] = m[1] * x + m[5] * y + m[13];
     return out;
 }
-},{"./common":36,"./pack-rgba-float":39,"gl-white-texture":91,"mixes":98,"premultiplied-rgba":103}],35:[function(require,module,exports){
+},{"./common":36,"./pack-rgba-float":39,"gl-white-texture":89,"mixes":96,"premultiplied-rgba":101}],35:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -4976,6 +4984,10 @@ var _glTexture2d2 = _interopRequireDefault(_glTexture2d);
 var _ndarray = require("ndarray");
 
 var _ndarray2 = _interopRequireDefault(_ndarray);
+
+var _sampler = require("./sampler");
+
+var _sampler2 = _interopRequireDefault(_sampler);
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -5002,6 +5014,16 @@ var Channel = function () {
         },
         set: function set(value) {
             this.options.resolution = value;
+        }
+    }, {
+        key: "color",
+        get: function get() {
+            return this.options.color || [0, 0, 0, 0];
+        }
+    }, {
+        key: "shape",
+        get: function get() {
+            return this.options.resolution;
         }
     }, {
         key: "position",
@@ -5093,6 +5115,7 @@ var Channel = function () {
         value: function addSampler(resolution, format, type) {
             var gl = this.context.contextGL,
                 self = this;
+            // console.log(new Sampler(gl[10, 10, 4]))
             // this.context.shader.bind();
             var pointer = 0,
                 texture = new _glTexture2d2.default(gl, resolution, format, type),
@@ -5135,11 +5158,11 @@ Channel.defaults = {
 };
 exports.default = Channel;
 module.exports = exports["default"];
-},{"gl-texture2d":86,"ndarray":100}],36:[function(require,module,exports){
+},{"./sampler":40,"gl-texture2d":84,"ndarray":98}],36:[function(require,module,exports){
 'use strict';
 
-var createVAO = require('gl-aliased-vao'); //TODO: improve this with gl-vao
-var createBuffer = require('gl-buffer');
+var createVAO = require('gl-vao'),
+    createBuffer = require('gl-buffer');
 
 module.exports.floatsPerVertex = 5;
 
@@ -5185,7 +5208,8 @@ module.exports.mixins = {
         this.vertexBuffer = createBuffer(gl, this.vertices, gl.ARRAY_BUFFER, usage);
         this.indexBuffer = createBuffer(gl, this.indices, gl.ELEMENT_ARRAY_BUFFER, gl.STATIC_DRAW);
 
-        var stride = 5 * 4;
+        var stride = module.exports.floatsPerVertex * 4;
+
         this.vao = createVAO(gl, [{
             //position XY
             name: 'position',
@@ -5193,7 +5217,7 @@ module.exports.mixins = {
             size: 2,
             stride: stride
         }, { //texcoord UV
-            name: 'texcoord0',
+            name: 'uv',
             buffer: this.vertexBuffer,
             size: 2,
             offset: 2 * 4,
@@ -5215,7 +5239,7 @@ module.exports.mixins = {
         return this;
     }
 };
-},{"gl-aliased-vao":53,"gl-buffer":56}],37:[function(require,module,exports){
+},{"gl-buffer":54,"gl-vao":88}],37:[function(require,module,exports){
 'use strict';
 
 function createContext(width, height, options) {
@@ -5369,15 +5393,16 @@ var Glayer = function () {
             });
 
             this.shader = (0, _shader2.default)(gl, {
-                texcoord: 3,
+                texcoord: 0,
                 color: true,
                 normal: false
             });
         };
 
         var time = 0;
+
         this.render = function () {
-            time += 0.1;
+            time += 0.05;
 
             gl.enable(gl.BLEND);
             gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
@@ -5387,7 +5412,6 @@ var Glayer = function () {
             this.batch.premultiplied = true;
 
             this.shader.bind();
-            this.shader.uniforms.texture0 = 0;
 
             _glMat2.default.ortho(ortho, 0, this.width, this.height, 0, 0, 1);
             this.shader.uniforms.projection = ortho;
@@ -5395,73 +5419,21 @@ var Glayer = function () {
             this.batch.bind(this.shader);
             this.batch.clear();
 
-            // this._channels.map(function(channel) {
-            //     channel._samplers.map(function(sample) {
-            //         console.log(sample);
-            //         self.batch.push({
-            //             texture: sample.texture,
-            //             position: [0, 0],
-            //             shape: sample.texture.shape
-            //             // color:  [1.0, 0.0, 0.2, 0.2]
-            //         });
-            //     });
-            // });
-
-            var sample, channel;
-
-            channel = this._channels[1];
-            sample = channel._samplers[0];
-
-            !channel.disabled && self.batch.push({
-                type: 2,
-                texture: channel._samplers.map(function (sampler) {
-                    return sampler.texture;
-                }),
-                position: channel.position || [0, 0],
-                shape: sample.texture.shape,
-                color: [0.8, 0.0, 0.0, 0.0]
+            var sprites = this._channels.filter(function (channel) {
+                return !channel.disabled;
+            }).map(function (channel, index) {
+                return {
+                    format: channel.type,
+                    texture: channel._samplers.map(function (sampler) {
+                        return sampler.texture;
+                    }),
+                    position: channel.position,
+                    shape: channel.shape,
+                    color: channel.color
+                };
             });
 
-            channel = this._channels[0];
-            sample = channel._samplers[0];
-
-            !channel.disabled && self.batch.push({
-                type: 1,
-                texture: [sample.texture, sample.texture, sample.texture],
-                position: channel.position || [0, 0],
-                shape: sample.texture.shape,
-                color: [0.8, 0.0, 0.0, 1.0]
-            });
-
-            // var d = Math.cos(time * 0.01);
-            // var w = d * sample.texture.shape[0];
-            // var h = d * sample.texture.shape[1];
-            //
-            // self.batch.push({
-            //     texture: sample.texture,
-            //     position: [
-            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-            //     ],
-            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-            //     color: [0.8, 0.0, 0.0, 0.8]
-            // });
-
-            // sample = this._channels[2]._samplers[0];
-            //
-            // d = Math.cos(time * 0.01);
-            // w = d * sample.texture.shape[0];
-            // h = d * sample.texture.shape[1];
-            //
-            // self.batch.push({
-            //     texture: sample.texture,
-            //     position: [
-            //       (self.width - w) * 0.5 + Math.cos(time * 0.1) * (100 * d),
-            //       (self.height - h) * 0.5 + Math.sin(time * 0.1) * (100 * d)
-            //     ],
-            //     shape: [Math.cos(time * 0.01) * w, Math.cos(time * 0.01) * h],
-            //     color: [1/Math.cos(time * 0.1), 0.0, 0.0, Math.sin(time * 0.01)]
-            // });
+            self.batch.push(sprites);
 
             this.batch.draw();
 
@@ -5519,7 +5491,7 @@ var Glayer = function () {
 
 exports.default = Glayer;
 module.exports = exports["default"];
-},{"./batch":34,"./channel":35,"./shader":40,"gl":37,"gl-buffer":56,"gl-fbo":57,"gl-mat4":67,"gl-texture2d":86,"gl-vao":90,"glslify":92}],39:[function(require,module,exports){
+},{"./batch":34,"./channel":35,"./shader":41,"gl":37,"gl-buffer":54,"gl-fbo":55,"gl-mat4":65,"gl-texture2d":84,"gl-vao":88,"glslify":90}],39:[function(require,module,exports){
 'use strict';
 
 var packColor = require('number-util').colorToFloat;
@@ -5527,7 +5499,57 @@ var packColor = require('number-util').colorToFloat;
 module.exports = function colorToFloat(rgba) {
     return packColor(~~(rgba[0] * 255), ~~(rgba[1] * 255), ~~(rgba[2] * 255), ~~(rgba[3] * 255));
 };
-},{"number-util":101}],40:[function(require,module,exports){
+},{"number-util":99}],40:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+    value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _glTexture2d = require("gl-texture2d");
+
+var _glTexture2d2 = _interopRequireDefault(_glTexture2d);
+
+var _typedarrayPool = require("typedarray-pool");
+
+var _typedarrayPool2 = _interopRequireDefault(_typedarrayPool);
+
+var _ndarray = require("ndarray");
+
+var _ndarray2 = _interopRequireDefault(_ndarray);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Sample = function () {
+    function Sample(context, shape, dtype) {
+        _classCallCheck(this, Sample);
+
+        this._texture = (0, _glTexture2d2.default)(context, (0, _ndarray2.default)(_typedarrayPool2.default.malloc(shape[0] * shape[1] * [2], dtype || 'uint8'), shape));
+    }
+
+    _createClass(Sample, [{
+        key: "set",
+        value: function set(data) {
+            this._texture.setPixels(data);
+            return this;
+        }
+    }, {
+        key: "dispose",
+        value: function dispose() {
+            this._texture.dispose();
+        }
+    }]);
+
+    return Sample;
+}();
+
+exports.default = Sample;
+module.exports = exports["default"];
+},{"gl-texture2d":84,"ndarray":98,"typedarray-pool":126}],41:[function(require,module,exports){
 'use strict';
 
 var identity = require('gl-mat4/identity');
@@ -5536,7 +5558,8 @@ var createShader = require('gl-shader-core');
 var POSITION_ATTRIBUTE = 'position',
     NORMAL_ATTRIBUTE = 'normal',
     COLOR_ATTRIBUTE = 'color',
-    TEXCOORD_ATTRIBUTE = 'texcoord';
+    TEXCOORD_ATTRIBUTE = 'texcoord',
+    FORMAT_ATTRIBUTE = 'format';
 
 module.exports = function (gl, options) {
     options = options || {};
@@ -5550,13 +5573,14 @@ module.exports = function (gl, options) {
 
     var shader = createShader(gl, vert, frag, uniforms, attribs);
     shader.bind();
-    for (var i = 0; i < options.texcoord; i++) {
-        shader.uniforms['texture' + i] = i;
-    }var arr = identity(new Float32Array(16));
+    var arr = identity(new Float32Array(16));
     shader.uniforms.projection = arr;
     shader.uniforms.model = arr;
     shader.uniforms.view = arr;
     shader.uniforms.tint = options.tint || [1, 1, 1, 1];
+    shader.uniforms.texture0 = 0;
+    shader.uniforms.texture1 = 1;
+    shader.uniforms.texture2 = 2;
 
     return shader;
 };
@@ -5581,45 +5605,35 @@ module.exports.generate = function (options) {
     }, {
         type: 'vec4',
         name: 'tint'
+    }, {
+        type: 'int',
+        name: 'format'
+    }, {
+        type: 'sampler2D',
+        name: 'texture0'
+    }, {
+        type: 'sampler2D',
+        name: 'texture1'
+    }, {
+        type: 'sampler2D',
+        name: 'texture2'
     }];
 
     //Similar to old school pipeline, we will use fixed locations
     //http://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php
     var attribs = [{
-        type: 'vec4',
+        type: 'vec2',
         name: POSITION_ATTRIBUTE,
         location: 0
-    }];
-
-    if (options.normal) attribs.push({
-        type: 'vec3',
-        name: NORMAL_ATTRIBUTE,
+    }, {
+        type: 'vec2',
+        name: 'uv',
         location: 1
-    });
-    if (options.color) attribs.push({
+    }, {
         type: 'vec4',
         name: COLOR_ATTRIBUTE,
         location: 2
-    });
-
-    attribs.push({
-        type: 'int',
-        name: 'type',
-        location: 3
-    });
-
-    var idx = 4;
-    for (var i = 0; i < options.texcoord; i++) {
-        uniforms.push({
-            type: 'sampler2D',
-            name: 'texture' + i
-        });
-        attribs.push({
-            type: 'vec2',
-            name: TEXCOORD_ATTRIBUTE + i,
-            location: idx++
-        });
-    }
+    }];
 
     return {
         vertex: vert,
@@ -5630,55 +5644,17 @@ module.exports.generate = function (options) {
 };
 
 function createVertexShader(hasNormals, hasColors, numTexCoords, pointSize) {
-    numTexCoords = numTexCoords || 0;
-    var shader = "";
-    shader += "attribute vec4 " + POSITION_ATTRIBUTE + ";\n" + (hasNormals ? "attribute vec3 " + NORMAL_ATTRIBUTE + ";\n" : "") + (hasColors ? "attribute vec4 " + COLOR_ATTRIBUTE + ";\n" : "") + "attribute float type;\n";
+    var shader = ['attribute vec4 position;', 'attribute vec2 uv;', 'attribute vec4 color;', 'uniform mat4 projection;', 'uniform mat4 view;', 'uniform mat4 model;', 'varying vec4 v_col;', 'varying vec2 v_uv;', 'void main() {', 'gl_Position = projection * view * model * position;', 'v_col = color;', 'v_uv = uv;', 'gl_PointSize = 1.00000;', '}'].join('\n');
 
-    var i;
-    pointSize = pointSize.toFixed(5);
-
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "attribute vec2 " + TEXCOORD_ATTRIBUTE + i + ";\n";
-    }
-
-    shader += "uniform mat4 projection;\n";
-    shader += "uniform mat4 view;\n";
-    shader += "uniform mat4 model;\n";
-
-    shader += hasColors ? "varying vec4 v_col;\n" : "";
-    shader += "varying float v_type;\n";
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "varying vec2 v_tex" + i + ";\n";
-    }
-
-    shader += "\nvoid main() {\n" + "   gl_Position = projection * view * model * " + POSITION_ATTRIBUTE + ";\n" + (hasColors ? "   v_col = " + COLOR_ATTRIBUTE + ";\n" : "") + "    v_type = type;\n";
-
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "   v_tex" + i + " = " + TEXCOORD_ATTRIBUTE + i + ";\n";
-    }
-    shader += "   gl_PointSize = " + pointSize + ";\n";
-    shader += "}\n";
     return shader;
 }
 
 function createFragmentShader(hasColors, numTexCoords) {
-    numTexCoords = numTexCoords || 0;
-    var shader = "#ifdef GL_ES\n" + "precision mediump float;\n" + "#endif\n\n";
+    var shader = ['#ifdef GL_ES', 'precision mediump float;', '#endif', 'precision highp float;', 'varying vec4 v_col;', 'varying vec2 v_uv;', 'uniform int format;', 'uniform sampler2D texture0;', 'uniform sampler2D texture1;', 'uniform sampler2D texture2;', 'vec3 yuv420p(float y, float u, float v) {', 'float fYmul = y * 1.1643828125;', 'return vec3(', 'fYmul + 1.59602734375 * v - 0.87078515625,', 'fYmul - 0.39176171875 * u - 0.81296875 * v + 0.52959375,', 'fYmul + 2.017234375   * u - 1.081390625', ');', '}', 'void main() {', 'if(format == 2){', 'gl_FragColor = vec4(yuv420p(texture2D(texture0,  v_uv).r, texture2D(texture1,  v_uv).r, texture2D(texture2,  v_uv).r), 1.0);', '} else {', 'gl_FragColor = texture2D(texture0,  v_uv);', '}', '}'].join('\n');
 
-    if (hasColors) shader += "varying vec4 v_col;\n";
-
-    var i;
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "varying vec2 v_tex" + i + ";\n";
-        shader += "uniform sampler2D texture" + i + ";\n";
-    }
-    shader += "varying float v_type;\n";
-    shader += "uniform vec4 tint;\n";
-
-    shader += ['precision highp float;', 'vec3 yuv420p(float y, float u, float v) {', 'float fYmul = y * 1.1643828125;', 'return vec3(', 'fYmul + 1.59602734375 * v - 0.87078515625,', 'fYmul - 0.39176171875 * u - 0.81296875 * v + 0.52959375,', 'fYmul + 2.017234375   * u - 1.081390625', ');', '}', 'void main() {', 'if(v_col.a == 0.0){', 'gl_FragColor = vec4(yuv420p(texture2D(texture0,  v_tex0).r, texture2D(texture1,  v_tex0).r, texture2D(texture2,  v_tex0).r), 1.0) * tint;', '} else {', 'gl_FragColor = texture2D(texture0,  v_tex0) * tint;', '}', '}'].join('\n');
     return shader;
 }
-},{"gl-mat4/identity":66,"gl-shader-core":85}],41:[function(require,module,exports){
+},{"gl-mat4/identity":64,"gl-shader-core":83}],42:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -5794,7 +5770,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],42:[function(require,module,exports){
+},{}],43:[function(require,module,exports){
 /**
  * Bit twiddling hacks for JavaScript.
  *
@@ -6000,9 +5976,9 @@ exports.nextCombination = function(v) {
 }
 
 
-},{}],43:[function(require,module,exports){
-
 },{}],44:[function(require,module,exports){
+
+},{}],45:[function(require,module,exports){
 (function (global){
 'use strict';
 
@@ -6114,7 +6090,7 @@ exports.allocUnsafeSlow = function allocUnsafeSlow(size) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"buffer":45}],45:[function(require,module,exports){
+},{"buffer":46}],46:[function(require,module,exports){
 (function (global){
 /*!
  * The buffer module from node.js, for the browser.
@@ -7907,7 +7883,7 @@ function isnan (val) {
 }
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"base64-js":41,"ieee754":93,"isarray":97}],46:[function(require,module,exports){
+},{"base64-js":42,"ieee754":91,"isarray":95}],47:[function(require,module,exports){
 module.exports = {
   "100": "Continue",
   "101": "Switching Protocols",
@@ -7972,7 +7948,7 @@ module.exports = {
   "511": "Network Authentication Required"
 }
 
-},{}],47:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 (function (Buffer){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -8083,13 +8059,13 @@ function objectToString(o) {
 }
 
 }).call(this,{"isBuffer":require("../../is-buffer/index.js")})
-},{"../../is-buffer/index.js":96}],48:[function(require,module,exports){
+},{"../../is-buffer/index.js":94}],49:[function(require,module,exports){
 arguments[4][3][0].apply(exports,arguments)
-},{"./lib/thunk.js":50,"dup":3}],49:[function(require,module,exports){
+},{"./lib/thunk.js":51,"dup":3}],50:[function(require,module,exports){
 arguments[4][4][0].apply(exports,arguments)
-},{"dup":4,"uniq":129}],50:[function(require,module,exports){
+},{"dup":4,"uniq":127}],51:[function(require,module,exports){
 arguments[4][5][0].apply(exports,arguments)
-},{"./compile.js":49,"dup":5}],51:[function(require,module,exports){
+},{"./compile.js":50,"dup":5}],52:[function(require,module,exports){
 "use strict"
 
 function dupe_array(count, value, i) {
@@ -8139,7 +8115,7 @@ function dupe(count, value) {
 }
 
 module.exports = dupe
-},{}],52:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -8443,147 +8419,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],53:[function(require,module,exports){
-var createVAOEmulated = require("./lib/vao-emulated.js")
-
-function createVAO(gl, attributes, elements, elementsType) {
-  var vao = createVAOEmulated(gl)
-  vao.update(attributes, elements, elementsType)
-  return vao
-}
-
-module.exports = createVAO
-},{"./lib/vao-emulated.js":55}],54:[function(require,module,exports){
-function getAttributeLocation(name, shader) {
-    if (!name)
-        return null
-    var attr = shader.attributes
-    if (attr[name]) 
-        return attr[name].location
-    return null
-}
-
-var nattribs = null
-var bound = null
-
-function doBind(gl, elements, attributes, shader) {
-    if (elements) {
-        elements.bind()
-    } else {
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, null)
-    }
-    if (nattribs === null) {
-      nattribs = gl.getParameter(gl.MAX_VERTEX_ATTRIBS) | 0
-      bound = new Array(nattribs)
-    }
-
-    if (attributes) {
-        if (attributes.length > nattribs) {
-            throw new Error("gl-vao: Too many vertex attributes")
-        }
-
-        var lastBound = null
-
-        for (i=0; i<nattribs; i++)
-          bound[i] = false
-
-        //now bind aliased attributes
-        for (i=0; i<attributes.length; i++) {
-            var attrib = attributes[i]
-            var loc = getAttributeLocation(attrib.name, shader)
-            if (loc === null)
-                continue
-
-            bound[loc] = true
-
-            if(attrib.buffer) {
-              var buffer = attrib.buffer
-              var size = attrib.size || 4
-              var type = attrib.type || gl.FLOAT
-              var normalized = !!attrib.normalized
-              var stride = attrib.stride || 0
-              var offset = attrib.offset || 0
-              if (lastBound !== buffer) {
-                buffer.bind()
-                lastBound = buffer
-              }
-              gl.enableVertexAttribArray(loc)
-              gl.vertexAttribPointer(loc, size, type, normalized, stride, offset)
-            } else {
-              if(typeof attrib === "number") {
-                gl.vertexAttrib1f(loc, attrib)
-              } else if(attrib.length === 1) {
-                gl.vertexAttrib1f(loc, attrib[0])
-              } else if(attrib.length === 2) {
-                gl.vertexAttrib2f(loc, attrib[0], attrib[1])
-              } else if(attrib.length === 3) {
-                gl.vertexAttrib3f(loc, attrib[0], attrib[1], attrib[2])
-              } else if(attrib.length === 4) {
-                gl.vertexAttrib4f(loc, attrib[0], attrib[1], attrib[2], attrib[3])
-              } else {
-                throw new Error("gl-vao: Invalid vertex attribute")
-              }
-              gl.disableVertexAttribArray(loc)
-            }
-
-        }
-        
-        for (i=0; i<nattribs; i++) {
-          if (!bound[i])
-            gl.disableVertexAttribArray(i)
-        }
-    } else {
-      gl.bindBuffer(gl.ARRAY_BUFFER, null)
-      for(var i=0; i<nattribs; ++i) {
-        gl.disableVertexAttribArray(i)
-      }
-    }
-}
-
-module.exports = doBind
-},{}],55:[function(require,module,exports){
-var bindAttribs = require("./do-bind.js")
-
-function VAOEmulated(gl) {
-  this.gl = gl
-  this._elements = null
-  this._attributes = null
-  this._elementsType = gl.UNSIGNED_SHORT
-}
-
-VAOEmulated.prototype.bind = function(shader) {
-  if (!shader)
-    throw new Error('must associate shader with vertex array')
-  bindAttribs(this.gl, this._elements, this._attributes, shader)
-}
-
-VAOEmulated.prototype.update = function(attributes, elements, elementsType) {
-  this._elements = elements
-  this._attributes = attributes
-  this._elementsType = elementsType || this.gl.UNSIGNED_SHORT
-}
-
-VAOEmulated.prototype.dispose = function() { }
-VAOEmulated.prototype.unbind = function() {
-  bindAttribs(this.gl)
-}
-
-VAOEmulated.prototype.draw = function(mode, count, offset) {
-  offset = offset || 0
-  var gl = this.gl
-  if(this._elements) {
-    gl.drawElements(mode, count, this._elementsType, offset)
-  } else {
-    gl.drawArrays(mode, offset, count)
-  }
-}
-
-function createVAOEmulated(gl) {
-  return new VAOEmulated(gl)
-}
-
-module.exports = createVAOEmulated
-},{"./do-bind.js":54}],56:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 "use strict"
 
 var pool = require("typedarray-pool")
@@ -8737,7 +8573,7 @@ function createBuffer(gl, data, type, usage) {
 
 module.exports = createBuffer
 
-},{"ndarray":100,"ndarray-ops":99,"typedarray-pool":128}],57:[function(require,module,exports){
+},{"ndarray":98,"ndarray-ops":97,"typedarray-pool":126}],55:[function(require,module,exports){
 'use strict'
 
 var createTexture = require('gl-texture2d')
@@ -9204,7 +9040,7 @@ function createFBO(gl, width, height, options) {
     WEBGL_draw_buffers)
 }
 
-},{"gl-texture2d":86}],58:[function(require,module,exports){
+},{"gl-texture2d":84}],56:[function(require,module,exports){
 module.exports = adjoint;
 
 /**
@@ -9238,7 +9074,7 @@ function adjoint(out, a) {
     out[15] =  (a00 * (a11 * a22 - a12 * a21) - a10 * (a01 * a22 - a02 * a21) + a20 * (a01 * a12 - a02 * a11));
     return out;
 };
-},{}],59:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 module.exports = clone;
 
 /**
@@ -9267,7 +9103,7 @@ function clone(a) {
     out[15] = a[15];
     return out;
 };
-},{}],60:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 module.exports = copy;
 
 /**
@@ -9296,7 +9132,7 @@ function copy(out, a) {
     out[15] = a[15];
     return out;
 };
-},{}],61:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = create;
 
 /**
@@ -9324,7 +9160,7 @@ function create() {
     out[15] = 1;
     return out;
 };
-},{}],62:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 module.exports = determinant;
 
 /**
@@ -9355,7 +9191,7 @@ function determinant(a) {
     // Calculate the determinant
     return b00 * b11 - b01 * b10 + b02 * b09 + b03 * b08 - b04 * b07 + b05 * b06;
 };
-},{}],63:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 module.exports = fromQuat;
 
 /**
@@ -9403,7 +9239,7 @@ function fromQuat(out, q) {
 
     return out;
 };
-},{}],64:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 module.exports = fromRotationTranslation;
 
 /**
@@ -9457,7 +9293,7 @@ function fromRotationTranslation(out, q, v) {
     
     return out;
 };
-},{}],65:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 module.exports = frustum;
 
 /**
@@ -9494,7 +9330,7 @@ function frustum(out, left, right, bottom, top, near, far) {
     out[15] = 0;
     return out;
 };
-},{}],66:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 module.exports = identity;
 
 /**
@@ -9522,7 +9358,7 @@ function identity(out) {
     out[15] = 1;
     return out;
 };
-},{}],67:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 module.exports = {
   create: require('./create')
   , clone: require('./clone')
@@ -9548,7 +9384,7 @@ module.exports = {
   , lookAt: require('./lookAt')
   , str: require('./str')
 }
-},{"./adjoint":58,"./clone":59,"./copy":60,"./create":61,"./determinant":62,"./fromQuat":63,"./fromRotationTranslation":64,"./frustum":65,"./identity":66,"./invert":68,"./lookAt":69,"./multiply":70,"./ortho":71,"./perspective":72,"./perspectiveFromFieldOfView":73,"./rotate":74,"./rotateX":75,"./rotateY":76,"./rotateZ":77,"./scale":78,"./str":79,"./translate":80,"./transpose":81}],68:[function(require,module,exports){
+},{"./adjoint":56,"./clone":57,"./copy":58,"./create":59,"./determinant":60,"./fromQuat":61,"./fromRotationTranslation":62,"./frustum":63,"./identity":64,"./invert":66,"./lookAt":67,"./multiply":68,"./ortho":69,"./perspective":70,"./perspectiveFromFieldOfView":71,"./rotate":72,"./rotateX":73,"./rotateY":74,"./rotateZ":75,"./scale":76,"./str":77,"./translate":78,"./transpose":79}],66:[function(require,module,exports){
 module.exports = invert;
 
 /**
@@ -9604,7 +9440,7 @@ function invert(out, a) {
 
     return out;
 };
-},{}],69:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 var identity = require('./identity');
 
 module.exports = lookAt;
@@ -9695,7 +9531,7 @@ function lookAt(out, eye, center, up) {
 
     return out;
 };
-},{"./identity":66}],70:[function(require,module,exports){
+},{"./identity":64}],68:[function(require,module,exports){
 module.exports = multiply;
 
 /**
@@ -9738,7 +9574,7 @@ function multiply(out, a, b) {
     out[15] = b0*a03 + b1*a13 + b2*a23 + b3*a33;
     return out;
 };
-},{}],71:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 module.exports = ortho;
 
 /**
@@ -9775,7 +9611,7 @@ function ortho(out, left, right, bottom, top, near, far) {
     out[15] = 1;
     return out;
 };
-},{}],72:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 module.exports = perspective;
 
 /**
@@ -9809,7 +9645,7 @@ function perspective(out, fovy, aspect, near, far) {
     out[15] = 0;
     return out;
 };
-},{}],73:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 module.exports = perspectiveFromFieldOfView;
 
 /**
@@ -9851,7 +9687,7 @@ function perspectiveFromFieldOfView(out, fov, near, far) {
 }
 
 
-},{}],74:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 module.exports = rotate;
 
 /**
@@ -9916,7 +9752,7 @@ function rotate(out, a, rad, axis) {
     }
     return out;
 };
-},{}],75:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 module.exports = rotateX;
 
 /**
@@ -9961,7 +9797,7 @@ function rotateX(out, a, rad) {
     out[11] = a23 * c - a13 * s;
     return out;
 };
-},{}],76:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 module.exports = rotateY;
 
 /**
@@ -10006,7 +9842,7 @@ function rotateY(out, a, rad) {
     out[11] = a03 * s + a23 * c;
     return out;
 };
-},{}],77:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports = rotateZ;
 
 /**
@@ -10051,7 +9887,7 @@ function rotateZ(out, a, rad) {
     out[7] = a13 * c - a03 * s;
     return out;
 };
-},{}],78:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports = scale;
 
 /**
@@ -10083,7 +9919,7 @@ function scale(out, a, v) {
     out[15] = a[15];
     return out;
 };
-},{}],79:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 module.exports = str;
 
 /**
@@ -10098,7 +9934,7 @@ function str(a) {
                     a[8] + ', ' + a[9] + ', ' + a[10] + ', ' + a[11] + ', ' + 
                     a[12] + ', ' + a[13] + ', ' + a[14] + ', ' + a[15] + ')';
 };
-},{}],80:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 module.exports = translate;
 
 /**
@@ -10137,7 +9973,7 @@ function translate(out, a, v) {
 
     return out;
 };
-},{}],81:[function(require,module,exports){
+},{}],79:[function(require,module,exports){
 module.exports = transpose;
 
 /**
@@ -10187,7 +10023,7 @@ function transpose(out, a) {
     
     return out;
 };
-},{}],82:[function(require,module,exports){
+},{}],80:[function(require,module,exports){
 'use strict'
 
 module.exports = createAttributeWrapper
@@ -10283,7 +10119,7 @@ function createAttributeWrapper(gl, program, attributes, doLink) {
   }
   return obj
 }
-},{}],83:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 'use strict'
 
 var dup = require('dup')
@@ -10465,7 +10301,7 @@ function createUniformWrapper(gl, program, uniforms, locations) {
   }
 }
 
-},{"./reflect":84,"dup":51}],84:[function(require,module,exports){
+},{"./reflect":82,"dup":52}],82:[function(require,module,exports){
 'use strict'
 
 module.exports = makeReflectTypes
@@ -10523,7 +10359,7 @@ function makeReflectTypes(uniforms, useIndex) {
   }
   return obj
 }
-},{}],85:[function(require,module,exports){
+},{}],83:[function(require,module,exports){
 'use strict'
 
 var createUniformWrapper = require('./lib/create-uniforms')
@@ -10654,7 +10490,7 @@ function createShader(
 
 module.exports = createShader
 
-},{"./lib/create-attributes":82,"./lib/create-uniforms":83,"./lib/reflect":84}],86:[function(require,module,exports){
+},{"./lib/create-attributes":80,"./lib/create-uniforms":81,"./lib/reflect":82}],84:[function(require,module,exports){
 'use strict'
 
 var ndarray = require('ndarray')
@@ -11217,7 +11053,7 @@ function createTexture2D(gl) {
   throw new Error('gl-texture2d: Invalid arguments for texture2d constructor')
 }
 
-},{"ndarray":100,"ndarray-ops":99,"typedarray-pool":128}],87:[function(require,module,exports){
+},{"ndarray":98,"ndarray-ops":97,"typedarray-pool":126}],85:[function(require,module,exports){
 "use strict"
 
 function doBind(gl, elements, attributes) {
@@ -11272,7 +11108,7 @@ function doBind(gl, elements, attributes) {
 }
 
 module.exports = doBind
-},{}],88:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 "use strict"
 
 var bindAttribs = require("./do-bind.js")
@@ -11312,7 +11148,7 @@ function createVAOEmulated(gl) {
 }
 
 module.exports = createVAOEmulated
-},{"./do-bind.js":87}],89:[function(require,module,exports){
+},{"./do-bind.js":85}],87:[function(require,module,exports){
 "use strict"
 
 var bindAttribs = require("./do-bind.js")
@@ -11400,7 +11236,7 @@ function createVAONative(gl, ext) {
 }
 
 module.exports = createVAONative
-},{"./do-bind.js":87}],90:[function(require,module,exports){
+},{"./do-bind.js":85}],88:[function(require,module,exports){
 "use strict"
 
 var createVAONative = require("./lib/vao-native.js")
@@ -11429,7 +11265,7 @@ function createVAO(gl, attributes, elements, elementsType) {
 
 module.exports = createVAO
 
-},{"./lib/vao-emulated.js":88,"./lib/vao-native.js":89}],91:[function(require,module,exports){
+},{"./lib/vao-emulated.js":86,"./lib/vao-native.js":87}],89:[function(require,module,exports){
 var create = require('gl-texture2d')
 var ndarray = require('ndarray')
 
@@ -11441,7 +11277,7 @@ module.exports = function(gl) {
     var array = ndarray(new Uint8Array(data), [2, 2, 4])
     return create(gl, array)
 }
-},{"gl-texture2d":86,"ndarray":100}],92:[function(require,module,exports){
+},{"gl-texture2d":84,"ndarray":98}],90:[function(require,module,exports){
 module.exports = function(strings) {
   if (typeof strings === 'string') strings = [strings]
   var exprs = [].slice.call(arguments,1)
@@ -11453,7 +11289,7 @@ module.exports = function(strings) {
   return parts.join('')
 }
 
-},{}],93:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
   var eLen = nBytes * 8 - mLen - 1
@@ -11539,15 +11375,15 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],94:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],95:[function(require,module,exports){
+},{"dup":8}],93:[function(require,module,exports){
 arguments[4][9][0].apply(exports,arguments)
-},{"dup":9}],96:[function(require,module,exports){
+},{"dup":9}],94:[function(require,module,exports){
 arguments[4][10][0].apply(exports,arguments)
-},{"dup":10}],97:[function(require,module,exports){
+},{"dup":10}],95:[function(require,module,exports){
 arguments[4][11][0].apply(exports,arguments)
-},{"dup":11}],98:[function(require,module,exports){
+},{"dup":11}],96:[function(require,module,exports){
 var xtend = require('xtend')
 
 var defaults = {
@@ -11574,7 +11410,7 @@ module.exports = function mixes(ctor, entries) {
 }
 
 module.exports.mix = mix
-},{"xtend":136}],99:[function(require,module,exports){
+},{"xtend":134}],97:[function(require,module,exports){
 "use strict"
 
 var compile = require("cwise-compiler")
@@ -12037,9 +11873,9 @@ exports.equals = compile({
 
 
 
-},{"cwise-compiler":48}],100:[function(require,module,exports){
+},{"cwise-compiler":49}],98:[function(require,module,exports){
 arguments[4][14][0].apply(exports,arguments)
-},{"dup":14,"iota-array":95,"is-buffer":96}],101:[function(require,module,exports){
+},{"dup":14,"iota-array":93,"is-buffer":94}],99:[function(require,module,exports){
 var int8 = new Int8Array(4);
 var int32 = new Int32Array(int8.buffer, 0, 1);
 var float32 = new Float32Array(int8.buffer, 0, 1);
@@ -12137,7 +11973,7 @@ NumberUtil.nextPowerOfTwo = function(n) {
 };
 
 module.exports = NumberUtil;
-},{}],102:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 (function (process){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -12365,7 +12201,7 @@ var substr = 'ab'.substr(-1) === 'b'
 ;
 
 }).call(this,require('_process'))
-},{"_process":105}],103:[function(require,module,exports){
+},{"_process":103}],101:[function(require,module,exports){
 function premultiply(rgba, out) {
 	if (!out || typeof out === 'number')
 		out = [0,0,0,0]
@@ -12376,9 +12212,9 @@ function premultiply(rgba, out) {
 	return out
 }
 module.exports = premultiply
-},{}],104:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 arguments[4][17][0].apply(exports,arguments)
-},{"_process":105,"dup":17}],105:[function(require,module,exports){
+},{"_process":103,"dup":17}],103:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -12560,7 +12396,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],106:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -13097,7 +12933,7 @@ process.umask = function() { return 0; };
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],107:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13183,7 +13019,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],108:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13270,18 +13106,18 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],109:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":107,"./encode":108}],110:[function(require,module,exports){
+},{"./decode":105,"./encode":106}],108:[function(require,module,exports){
 module.exports = require("./lib/_stream_duplex.js")
 
-},{"./lib/_stream_duplex.js":111}],111:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":109}],109:[function(require,module,exports){
 arguments[4][20][0].apply(exports,arguments)
-},{"./_stream_readable":113,"./_stream_writable":115,"core-util-is":47,"dup":20,"inherits":94,"process-nextick-args":104}],112:[function(require,module,exports){
+},{"./_stream_readable":111,"./_stream_writable":113,"core-util-is":48,"dup":20,"inherits":92,"process-nextick-args":102}],110:[function(require,module,exports){
 // a passthrough stream.
 // basically just the most minimal sort of Transform stream.
 // Every written chunk gets output as-is.
@@ -13308,7 +13144,7 @@ function PassThrough(options) {
 PassThrough.prototype._transform = function (chunk, encoding, cb) {
   cb(null, chunk);
 };
-},{"./_stream_transform":114,"core-util-is":47,"inherits":94}],113:[function(require,module,exports){
+},{"./_stream_transform":112,"core-util-is":48,"inherits":92}],111:[function(require,module,exports){
 (function (process){
 'use strict';
 
@@ -14248,7 +14084,7 @@ function indexOf(xs, x) {
   return -1;
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":111,"./internal/streams/BufferList":116,"_process":105,"buffer":45,"buffer-shims":44,"core-util-is":47,"events":52,"inherits":94,"isarray":97,"process-nextick-args":104,"string_decoder/":126,"util":43}],114:[function(require,module,exports){
+},{"./_stream_duplex":109,"./internal/streams/BufferList":114,"_process":103,"buffer":46,"buffer-shims":45,"core-util-is":48,"events":53,"inherits":92,"isarray":95,"process-nextick-args":102,"string_decoder/":124,"util":44}],112:[function(require,module,exports){
 // a transform stream is a readable/writable stream where you do
 // something with the data.  Sometimes it's called a "filter",
 // but that's not a great name for it, since that implies a thing where
@@ -14429,7 +14265,7 @@ function done(stream, er) {
 
   return stream.push(null);
 }
-},{"./_stream_duplex":111,"core-util-is":47,"inherits":94}],115:[function(require,module,exports){
+},{"./_stream_duplex":109,"core-util-is":48,"inherits":92}],113:[function(require,module,exports){
 (function (process){
 // A bit simpler than readable streams.
 // Implement an async ._write(chunk, encoding, cb), and it'll handle all
@@ -14958,7 +14794,7 @@ function CorkedRequest(state) {
   };
 }
 }).call(this,require('_process'))
-},{"./_stream_duplex":111,"_process":105,"buffer":45,"buffer-shims":44,"core-util-is":47,"events":52,"inherits":94,"process-nextick-args":104,"util-deprecate":132}],116:[function(require,module,exports){
+},{"./_stream_duplex":109,"_process":103,"buffer":46,"buffer-shims":45,"core-util-is":48,"events":53,"inherits":92,"process-nextick-args":102,"util-deprecate":130}],114:[function(require,module,exports){
 'use strict';
 
 var Buffer = require('buffer').Buffer;
@@ -15023,10 +14859,10 @@ BufferList.prototype.concat = function (n) {
   }
   return ret;
 };
-},{"buffer":45,"buffer-shims":44}],117:[function(require,module,exports){
+},{"buffer":46,"buffer-shims":45}],115:[function(require,module,exports){
 module.exports = require("./lib/_stream_passthrough.js")
 
-},{"./lib/_stream_passthrough.js":112}],118:[function(require,module,exports){
+},{"./lib/_stream_passthrough.js":110}],116:[function(require,module,exports){
 (function (process){
 var Stream = (function (){
   try {
@@ -15046,12 +14882,12 @@ if (!process.browser && process.env.READABLE_STREAM === 'disable' && Stream) {
 }
 
 }).call(this,require('_process'))
-},{"./lib/_stream_duplex.js":111,"./lib/_stream_passthrough.js":112,"./lib/_stream_readable.js":113,"./lib/_stream_transform.js":114,"./lib/_stream_writable.js":115,"_process":105}],119:[function(require,module,exports){
+},{"./lib/_stream_duplex.js":109,"./lib/_stream_passthrough.js":110,"./lib/_stream_readable.js":111,"./lib/_stream_transform.js":112,"./lib/_stream_writable.js":113,"_process":103}],117:[function(require,module,exports){
 arguments[4][24][0].apply(exports,arguments)
-},{"./lib/_stream_transform.js":114,"dup":24}],120:[function(require,module,exports){
+},{"./lib/_stream_transform.js":112,"dup":24}],118:[function(require,module,exports){
 module.exports = require("./lib/_stream_writable.js")
 
-},{"./lib/_stream_writable.js":115}],121:[function(require,module,exports){
+},{"./lib/_stream_writable.js":113}],119:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -15180,7 +15016,7 @@ Stream.prototype.pipe = function(dest, options) {
   return dest;
 };
 
-},{"events":52,"inherits":94,"readable-stream/duplex.js":110,"readable-stream/passthrough.js":117,"readable-stream/readable.js":118,"readable-stream/transform.js":119,"readable-stream/writable.js":120}],122:[function(require,module,exports){
+},{"events":53,"inherits":92,"readable-stream/duplex.js":108,"readable-stream/passthrough.js":115,"readable-stream/readable.js":116,"readable-stream/transform.js":117,"readable-stream/writable.js":118}],120:[function(require,module,exports){
 (function (global){
 var ClientRequest = require('./lib/request')
 var extend = require('xtend')
@@ -15262,7 +15098,7 @@ http.METHODS = [
 	'UNSUBSCRIBE'
 ]
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./lib/request":124,"builtin-status-codes":46,"url":130,"xtend":136}],123:[function(require,module,exports){
+},{"./lib/request":122,"builtin-status-codes":47,"url":128,"xtend":134}],121:[function(require,module,exports){
 (function (global){
 exports.fetch = isFunction(global.fetch) && isFunction(global.ReadableStream)
 
@@ -15306,7 +15142,7 @@ function isFunction (value) {
 xhr = null // Help gc
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],124:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 (function (process,global,Buffer){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -15592,7 +15428,7 @@ var unsafeHeaders = [
 ]
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":123,"./response":125,"_process":105,"buffer":45,"inherits":94,"readable-stream":118,"to-arraybuffer":127}],125:[function(require,module,exports){
+},{"./capability":121,"./response":123,"_process":103,"buffer":46,"inherits":92,"readable-stream":116,"to-arraybuffer":125}],123:[function(require,module,exports){
 (function (process,global,Buffer){
 var capability = require('./capability')
 var inherits = require('inherits')
@@ -15776,9 +15612,9 @@ IncomingMessage.prototype._onXHRProgress = function () {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"./capability":123,"_process":105,"buffer":45,"inherits":94,"readable-stream":118}],126:[function(require,module,exports){
+},{"./capability":121,"_process":103,"buffer":46,"inherits":92,"readable-stream":116}],124:[function(require,module,exports){
 arguments[4][27][0].apply(exports,arguments)
-},{"buffer":45,"dup":27}],127:[function(require,module,exports){
+},{"buffer":46,"dup":27}],125:[function(require,module,exports){
 var Buffer = require('buffer').Buffer
 
 module.exports = function (buf) {
@@ -15807,7 +15643,7 @@ module.exports = function (buf) {
 	}
 }
 
-},{"buffer":45}],128:[function(require,module,exports){
+},{"buffer":46}],126:[function(require,module,exports){
 (function (global,Buffer){
 'use strict'
 
@@ -16024,9 +15860,9 @@ exports.clearCache = function clearCache() {
   }
 }
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
-},{"bit-twiddle":42,"buffer":45,"dup":51}],129:[function(require,module,exports){
+},{"bit-twiddle":43,"buffer":46,"dup":52}],127:[function(require,module,exports){
 arguments[4][30][0].apply(exports,arguments)
-},{"dup":30}],130:[function(require,module,exports){
+},{"dup":30}],128:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -16760,7 +16596,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":131,"punycode":106,"querystring":109}],131:[function(require,module,exports){
+},{"./util":129,"punycode":104,"querystring":107}],129:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -16778,18 +16614,18 @@ module.exports = {
   }
 };
 
-},{}],132:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 arguments[4][31][0].apply(exports,arguments)
-},{"dup":31}],133:[function(require,module,exports){
+},{"dup":31}],131:[function(require,module,exports){
 arguments[4][8][0].apply(exports,arguments)
-},{"dup":8}],134:[function(require,module,exports){
+},{"dup":8}],132:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],135:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -17379,7 +17215,7 @@ function hasOwnProperty(obj, prop) {
 }
 
 }).call(this,require('_process'),typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":134,"_process":105,"inherits":133}],136:[function(require,module,exports){
+},{"./support/isBuffer":132,"_process":103,"inherits":131}],134:[function(require,module,exports){
 arguments[4][32][0].apply(exports,arguments)
 },{"dup":32}]},{},[1])(1)
 });

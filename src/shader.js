@@ -4,7 +4,8 @@ var createShader = require('gl-shader-core')
 var POSITION_ATTRIBUTE = 'position',
     NORMAL_ATTRIBUTE = 'normal',
     COLOR_ATTRIBUTE = 'color',
-    TEXCOORD_ATTRIBUTE = 'texcoord';
+    TEXCOORD_ATTRIBUTE = 'texcoord',
+    FORMAT_ATTRIBUTE = 'format';
 
 
 module.exports = function(gl, options) {
@@ -20,14 +21,14 @@ module.exports = function(gl, options) {
 
     var shader = createShader(gl, vert, frag, uniforms, attribs)
     shader.bind()
-    for (var i = 0; i < options.texcoord; i++)
-        shader.uniforms['texture' + i] = i
-
     var arr = identity(new Float32Array(16))
-    shader.uniforms.projection = arr
-    shader.uniforms.model = arr
-    shader.uniforms.view = arr
-    shader.uniforms.tint = options.tint || [1, 1, 1, 1]
+    shader.uniforms.projection = arr;
+    shader.uniforms.model = arr;
+    shader.uniforms.view = arr;
+    shader.uniforms.tint = options.tint || [1, 1, 1, 1];
+    shader.uniforms.texture0 = 0
+    shader.uniforms.texture1 = 1
+    shader.uniforms.texture2 = 2
 
     return shader
 }
@@ -55,47 +56,35 @@ module.exports.generate = function(options) {
     }, {
         type: 'vec4',
         name: 'tint'
+    }, {
+        type: 'int',
+        name: 'format'
+    }, {
+        type: 'sampler2D',
+        name: 'texture0'
+    }, {
+        type: 'sampler2D',
+        name: 'texture1'
+    }, {
+        type: 'sampler2D',
+        name: 'texture2'
     }]
 
     //Similar to old school pipeline, we will use fixed locations
     //http://www.opengl.org/sdk/docs/tutorials/ClockworkCoders/attributes.php
     var attribs = [{
-        type: 'vec4',
+        type: 'vec2',
         name: POSITION_ATTRIBUTE,
         location: 0
+    }, {
+        type: 'vec2',
+        name: 'uv',
+        location: 1
+    }, {
+        type: 'vec4',
+        name: COLOR_ATTRIBUTE,
+        location: 2
     }]
-
-    if (options.normal)
-        attribs.push({
-            type: 'vec3',
-            name: NORMAL_ATTRIBUTE,
-            location: 1
-        })
-    if (options.color)
-        attribs.push({
-            type: 'vec4',
-            name: COLOR_ATTRIBUTE,
-            location: 2
-        })
-
-    attribs.push({
-        type: 'int',
-        name: 'type',
-        location: 3
-    });
-
-    var idx = 4
-    for (var i = 0; i < options.texcoord; i++) {
-        uniforms.push({
-            type: 'sampler2D',
-            name: 'texture' + i
-        })
-        attribs.push({
-            type: 'vec2',
-            name: TEXCOORD_ATTRIBUTE + i,
-            location: idx++
-        })
-    }
 
     return {
         vertex: vert,
@@ -107,59 +96,38 @@ module.exports.generate = function(options) {
 
 
 function createVertexShader(hasNormals, hasColors, numTexCoords, pointSize) {
-    numTexCoords = numTexCoords || 0;
-    var shader = "";
-    shader += "attribute vec4 " + POSITION_ATTRIBUTE + ";\n" +
-        (hasNormals ? "attribute vec3 " + NORMAL_ATTRIBUTE + ";\n" : "") +
-        (hasColors ? "attribute vec4 " + COLOR_ATTRIBUTE + ";\n" : "") +
-         "attribute float type;\n";
+    var shader = [
+        'attribute vec4 position;',
+        'attribute vec2 uv;',
+        'attribute vec4 color;',
+        'uniform mat4 projection;',
+        'uniform mat4 view;',
+        'uniform mat4 model;',
+        'varying vec4 v_col;',
+        'varying vec2 v_uv;',
+        'void main() {',
+        'gl_Position = projection * view * model * position;',
+        'v_col = color;',
+        'v_uv = uv;',
+        'gl_PointSize = 1.00000;',
+        '}'
+    ].join('\n')
 
-    var i;
-    pointSize = pointSize.toFixed(5);
-
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "attribute vec2 " + TEXCOORD_ATTRIBUTE + i + ";\n";
-    }
-
-    shader += "uniform mat4 projection;\n";
-    shader += "uniform mat4 view;\n";
-    shader += "uniform mat4 model;\n";
-
-    shader += (hasColors ? "varying vec4 v_col;\n" : "");
-    shader += "varying float v_type;\n";
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "varying vec2 v_tex" + i + ";\n";
-    }
-
-    shader += "\nvoid main() {\n" + "   gl_Position = projection * view * model * " + POSITION_ATTRIBUTE + ";\n" +
-        (hasColors ? "   v_col = " + COLOR_ATTRIBUTE + ";\n" : "") +
-        "    v_type = type;\n";
-
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "   v_tex" + i + " = " + TEXCOORD_ATTRIBUTE + i + ";\n";
-    }
-    shader += "   gl_PointSize = " + pointSize + ";\n";
-    shader += "}\n";
     return shader;
 }
 
 function createFragmentShader(hasColors, numTexCoords) {
-    numTexCoords = numTexCoords || 0;
-    var shader = "#ifdef GL_ES\n" + "precision mediump float;\n" + "#endif\n\n";
-
-    if (hasColors)
-        shader += "varying vec4 v_col;\n";
-
-    var i;
-    for (i = 0; i < numTexCoords; i++) {
-        shader += "varying vec2 v_tex" + i + ";\n";
-        shader += "uniform sampler2D texture" + i + ";\n";
-    }
-    shader += "varying float v_type;\n";
-    shader += "uniform vec4 tint;\n";
-
-    shader += [
+    var shader = [
+        '#ifdef GL_ES',
+        'precision mediump float;',
+        '#endif',
         'precision highp float;',
+        'varying vec4 v_col;',
+        'varying vec2 v_uv;',
+        'uniform int format;',
+        'uniform sampler2D texture0;',
+        'uniform sampler2D texture1;',
+        'uniform sampler2D texture2;',
         'vec3 yuv420p(float y, float u, float v) {',
         'float fYmul = y * 1.1643828125;',
         'return vec3(',
@@ -169,12 +137,13 @@ function createFragmentShader(hasColors, numTexCoords) {
         ');',
         '}',
         'void main() {',
-        'if(v_col.a == 0.0){',
-        'gl_FragColor = vec4(yuv420p(texture2D(texture0,  v_tex0).r, texture2D(texture1,  v_tex0).r, texture2D(texture2,  v_tex0).r), 1.0) * tint;',
+        'if(format == 2){',
+        'gl_FragColor = vec4(yuv420p(texture2D(texture0,  v_uv).r, texture2D(texture1,  v_uv).r, texture2D(texture2,  v_uv).r), 1.0);',
         '} else {',
-        'gl_FragColor = texture2D(texture0,  v_tex0) * tint;',
+        'gl_FragColor = texture2D(texture0,  v_uv);',
         '}',
         '}'
-    ].join('\n');
+    ].join('\n')
+
     return shader;
 }

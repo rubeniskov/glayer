@@ -79,7 +79,7 @@ export default class Glayer {
                 return {
                     format: channel.type,
                     texture: channel._samplers.map(function(sampler) {
-                        return sampler.texture
+                        return sampler._texture
                     }),
                     position: channel.position,
                     shape: channel.shape,

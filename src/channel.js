@@ -64,17 +64,17 @@ export default class Channel {
         var gl = this.context.contextGL;
         switch (this.format) {
             case 'rgb':
-                this.addSampler([0, 0, 3]);
+                this.addSampler([1, 1, 3]);
                 break;
             case 'rgba':
-                this.addSampler([0, 0, 4]);
+                this.addSampler([1, 1, 4]);
                 // this.addSampler(this.resolution, gl[this.format.toUpperCase()], gl.UNSIGNED_BYTE);
                 this.type = 1
                 break;
             case 'yuv420p':
-                this.addSampler([0, 0]);
-                this.addSampler([0, 0]);
-                this.addSampler([0, 0]);
+                this.addSampler([1, 1]);
+                this.addSampler([1, 1]);
+                this.addSampler([1, 1]);
                 this.type = 2
                     // var quad = [this.resolution[0] >>> 1, this.resolution[1] >>> 1];
                     // this.type = 2
@@ -105,7 +105,7 @@ export default class Channel {
                 // this.samplers[0].data(self._data(data));
                 break;
             case 'yuv420p':
-                shape = this.resolution;
+                shape = Object.assign(this.resolution, shape);
                 var quad = [shape[0] >>> 1, shape[1] >>> 1],
                     ylen = shape[0] * shape[1],
                     uvlen = quad[0] * quad[1];
@@ -132,10 +132,5 @@ export default class Channel {
     addSampler(shape, ntype) {
         var gl = this.context.contextGL;
         this._samplers.push(new Sampler(gl, shape, ntype));
-    }
-    _data(data, resolution, components) {
-        components = components || this.components;
-        resolution = resolution ||  this.resolution;
-        return this.data = data.shape ? data : ndarray(new Uint8Array(data), resolution.concat([components]), [components, components * resolution[0], 1], 0);
     }
 }

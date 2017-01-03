@@ -108,6 +108,10 @@ export default class Glayer {
     attach(canvas) {
         this._attachments.push(canvas);
     }
+    detach(canvas){
+        var index = this._attachments.indexOf(canvas);
+        !!~(index) && this._attachments.slice(index, 1);
+    }
     replace(canvas) {
         canvas.replaceChild(canvas, canvas);
     }
